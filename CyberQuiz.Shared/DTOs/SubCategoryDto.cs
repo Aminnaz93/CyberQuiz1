@@ -11,5 +11,6 @@ namespace CyberQuiz.Shared.DTOs
         public int OrderIndex { get; init; }
         public int CategoryId { get; init; }
         public bool IsUnlocked { get; init; }
+        public int QuestionCount { get; init; }
     }
 }
