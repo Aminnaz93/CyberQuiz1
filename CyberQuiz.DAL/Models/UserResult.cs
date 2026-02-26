@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CyberQuiz.Shared.Models
+namespace CyberQuiz.DAL.Models
 {
     public class UserResult
     {
         public int Id { get; set; }
         public bool IsCorrect { get; set; }
-        public DateTime AnsweredAt { get; set; }
+        public DateTimeOffset AnsweredAt { get; set; }
 
         // FK till Identity
         public string UserId { get; set; }
