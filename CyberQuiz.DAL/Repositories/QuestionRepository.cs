@@ -26,9 +26,9 @@ namespace CyberQuiz.DAL.Repositories
             return await _context.Questions.FirstOrDefaultAsync(q => q.Id == id);
         }
 
-        public async Task<Question?> GetQuestionBySubcategoryAsync(int subCategory)
+        public IEnumerable<Question> GetQuestionBySubcategory(int subCategory)
         {
-            return await _context.Questions.FirstOrDefaultAsync(q => q.SubCategoryId == subCategory);
+            return _context.Questions.Where(q => q.SubCategoryId == subCategory).ToList();
         }
 
 
