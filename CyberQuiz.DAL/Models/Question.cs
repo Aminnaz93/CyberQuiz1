@@ -14,7 +14,7 @@ namespace CyberQuiz.DAL.Models
         public SubCategory SubCategory { get; set; }
 
         // Navigationspropertys
-        public ICollection<AnswerOption> AnswerOptions { get; set; }
-        public ICollection<UserResult> UserResults { get; set; }
+        public ICollection<AnswerOption> AnswerOptions { get; set; } = new List<AnswerOption>();
+        public ICollection<UserResult> UserResults { get; set; } = new List<UserResult>();
     }
 }

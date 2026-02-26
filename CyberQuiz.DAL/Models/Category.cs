@@ -10,7 +10,7 @@ namespace CyberQuiz.DAL.Models
         public string Name { get; set; }
 
         // Navigationsproperty
-        public ICollection<SubCategory> SubCategories { get; set; }
+        public ICollection<SubCategory> SubCategories { get; set; } = new List<SubCategory>();
     }
 }
 

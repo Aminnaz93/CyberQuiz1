@@ -4,7 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Identity;
 
 
-namespace CyberQuiz.Shared.Models
+namespace CyberQuiz.DAL.Models
 {
     // ApplicationUser ärver från IdentityUser
     public class ApplicationUser : IdentityUser
@@ -12,6 +12,6 @@ namespace CyberQuiz.Shared.Models
         public string DisplayName { get; set; } = string.Empty;
 
         public bool IsActive { get; set; } = true;
-        public ICollection<UserResult> UserResults { get; set; }
+        public ICollection<UserResult> UserResults { get; set; } = new List<UserResult>();
     }
 }
