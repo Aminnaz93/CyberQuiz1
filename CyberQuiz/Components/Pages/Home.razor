@@ -1,5 +1,18 @@
 ﻿@page "/"
 
+@attribute [ExcludeFromInteractiveRouting]
+
+@using System.ComponentModel.DataAnnotations
+@using CyberQuiz.Components.Account
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using CyberQuiz.Data
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+
 <PageTitle>CyberQuiz</PageTitle>
 
 <h1>CyberQuiz</h1>
@@ -32,3 +45,7 @@
         </EditForm>
     </div>
 </div>
+
+
+
+
