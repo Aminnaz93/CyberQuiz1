@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CyberQuiz.DAL.Repositories
 {
-    public class QuestionRepository
+    public class QuestionRepository : IQuestionRepository
     {
         private readonly ApplicationDbContext _context;
 
@@ -26,9 +26,9 @@ namespace CyberQuiz.DAL.Repositories
             return await _context.Questions.FirstOrDefaultAsync(q => q.Id == id);
         }
 
-        public IEnumerable<Question> GetQuestionBySubcategory(int subCategory)
+        public async Task<IEnumerable<Question>> GetQuestionBySubcategoryAsync(int subCategory)
         {
-            return _context.Questions.Where(q => q.SubCategoryId == subCategory).ToList();
+            return await _context.Questions.Where(q => q.SubCategoryId == subCategory).ToListAsync();
         }
 
 
