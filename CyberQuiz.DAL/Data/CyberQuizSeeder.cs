@@ -8,7 +8,7 @@ namespace CyberQuiz.DAL
     {
         public static void SeedCyberQuizData(this ModelBuilder modelBuilder)
         {
-            // Seed Categories
+            // Seeda Categories
             var categories = new List<Category>
             {
                 new Category { Id = 1, Name = "Nätverkssäkerhet" },
@@ -18,7 +18,7 @@ namespace CyberQuiz.DAL
 
             modelBuilder.Entity<Category>().HasData(categories);
 
-            // Seed SubCategories
+            // Seeda SubCategorier
             var subCategories = new List<SubCategory>
             {
                 // Nätverkssäkerhet
@@ -38,13 +38,13 @@ namespace CyberQuiz.DAL
             };
 
             modelBuilder.Entity<SubCategory>().HasData(subCategories);
-
-            // Questions and AnswerOptions will be added in the next step
+            
             SeedQuestions(modelBuilder);
         }
 
         private static void SeedQuestions(ModelBuilder modelBuilder)
         {
+            // Seeda frågor
             var questions = new List<Question>();
             var answerOptions = new List<AnswerOption>();
             int questionId = 1;

@@ -14,7 +14,7 @@ namespace CyberQuiz.DAL.Models
         public int CategoryId { get; set; }
         public Category Category { get; set; }
 
-        // Navigationsproperty 
+        // Navigationsproperty för att hitta alla subkategorins frågor
         public ICollection<Question> Questions { get; set; } = new List<Question>();
     }
 }

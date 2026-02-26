@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CyberQuiz.DAL
 {
+    // DbContext som ärver från IdentityDbContext
+    // endast en db
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -18,9 +20,13 @@ namespace CyberQuiz.DAL
         public DbSet<AnswerOption> AnswerOptions { get; set; }
         public DbSet<UserResult> UserResults { get; set; }
 
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            //Anropa base för att få Identity-tabeller (användare, roller, etc.)
             base.OnModelCreating(modelBuilder);
+
+            //Definiera relationer mellan tabeller
 
             // Category → SubCategory
             modelBuilder.Entity<Category>()
@@ -64,7 +70,7 @@ namespace CyberQuiz.DAL
                 .HasForeignKey(ur => ur.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Seed data
+            // Seeda initial data
             modelBuilder.SeedCyberQuizData();
         }
     }

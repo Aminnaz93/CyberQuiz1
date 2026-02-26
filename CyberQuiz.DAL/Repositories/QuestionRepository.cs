@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 
 namespace CyberQuiz.DAL.Repositories
 {
+    // Repository för databasoperationer mot Questions-tabellen
     public class QuestionRepository : IQuestionRepository
     {
         private readonly ApplicationDbContext _context;
 
+        // Dependency injection av DbContext
         public QuestionRepository(ApplicationDbContext context)
         {
             _context = context;
@@ -31,7 +33,7 @@ namespace CyberQuiz.DAL.Repositories
             return await _context.Questions.Where(q => q.SubCategoryId == subCategory).ToListAsync();
         }
 
-
+        //Tveksamt om vi kommer att uppdatera frågebanken, men det skadar ju aldrig!
         public async Task AddQuestionAsync(Question question)
         {
             _context.Questions.Add(question);
