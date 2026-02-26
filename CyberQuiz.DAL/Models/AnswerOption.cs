@@ -13,5 +13,7 @@ namespace CyberQuiz.DAL.Models
         // FK till Question
         public int QuestionId { get; set; }
         public Question Question { get; set; }
+
+        public ICollection<UserResult> UserResults { get; set; } = new List<UserResult>();
     }
 }

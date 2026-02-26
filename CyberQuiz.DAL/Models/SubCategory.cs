@@ -15,6 +15,6 @@ namespace CyberQuiz.DAL.Models
         public Category Category { get; set; }
 
         // Navigationsproperty 
-        public ICollection<Question> Questions { get; set; }
+        public ICollection<Question> Questions { get; set; } = new List<Question>();
     }
 }
