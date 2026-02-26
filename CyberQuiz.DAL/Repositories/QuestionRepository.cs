@@ -1,7 +1,9 @@
 ﻿using CyberQuiz.DAL.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace CyberQuiz.DAL.Repositories
 {
@@ -14,14 +16,14 @@ namespace CyberQuiz.DAL.Repositories
             _context = context;
         }
 
-        public IEnumerable<Question> GetAllQuestions()
+        public async Task<IEnumerable<Question>> GetAllQuestionsAsync()
         {
-            return _context.Questions.ToList();
+            return await _context.Questions.ToListAsync();
         }
 
-        public Question GetQuestionById(int id)
+        public async Task<Question?> GetQuestionByIdAsync(int id)
         {
-            return _context.Questions.FirstOrDefault(q => q.Id == id);
+            return await _context.Questions.FirstOrDefaultAsync(q => q.Id == id);
         }
 
         public IEnumerable<Question> GetQuestionBySubcategory(int subCategory)
@@ -30,25 +32,25 @@ namespace CyberQuiz.DAL.Repositories
         }
 
 
-        public void AddQuestion(Question question)
+        public async Task AddQuestionAsync(Question question)
         {
             _context.Questions.Add(question);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void UpdateQuestion(Question question)
+        public async Task UpdateQuestionAsync(Question question)
         {
             _context.Questions.Update(question);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void DeleteQuestion(int id)
+        public async Task DeleteQuestionAsync(int id)
         {
-            var question = _context.Questions.FirstOrDefault(q => q.Id == id);
+            var question = await _context.Questions.FirstOrDefaultAsync(q => q.Id == id);
             if (question != null)
             {
                 _context.Questions.Remove(question);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
             }
         }
     }

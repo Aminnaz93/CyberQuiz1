@@ -1,3 +1,4 @@
+using CyberQuiz.DAL.Data;
 using CyberQuiz.DAL.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -62,6 +63,9 @@ namespace CyberQuiz.DAL
                 .WithMany(u => u.UserResults)
                 .HasForeignKey(ur => ur.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // Seed data
+            modelBuilder.SeedCyberQuizData();
         }
     }
 }
