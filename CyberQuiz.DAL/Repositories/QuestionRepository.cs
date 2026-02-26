@@ -24,9 +24,9 @@ namespace CyberQuiz.DAL.Repositories
             return _context.Questions.FirstOrDefault(q => q.Id == id);
         }
 
-        public Question GetQuestionBySubcategory(int subCategory)
+        public IEnumerable<Question> GetQuestionBySubcategory(int subCategory)
         {
-            return _context.Questions.FirstOrDefault(q => q.SubCategoryId == subCategory);
+            return _context.Questions.Where(q => q.SubCategoryId == subCategory).ToList();
         }
 
 
