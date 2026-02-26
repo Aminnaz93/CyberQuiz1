@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace CyberQuiz.DAL.Models
+namespace CyberQuiz.Shared.Models
 {
     public class UserResult
     {

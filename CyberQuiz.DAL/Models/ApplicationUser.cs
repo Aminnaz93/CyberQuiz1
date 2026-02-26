@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 
-namespace CyberQuiz.DAL.Models
+
+namespace CyberQuiz.Shared.Models
 {
     // ApplicationUser ärver från IdentityUser
     public class ApplicationUser : IdentityUser

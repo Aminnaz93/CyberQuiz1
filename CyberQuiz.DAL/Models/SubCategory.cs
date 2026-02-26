@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CyberQuiz.DAL.Models
 {
-    internal class SubCategory
+    public class SubCategory
     {
         public int Id { get; set; }
         public string Name { get; set; }

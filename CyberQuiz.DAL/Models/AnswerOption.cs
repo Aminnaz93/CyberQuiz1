@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CyberQuiz.DAL.Models
 {
-    internal class AnswerOption
+    public class AnswerOption
     {
         public int Id { get; set; }
         public string Text { get; set; }
