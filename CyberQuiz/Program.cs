@@ -11,6 +11,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+//HTTP resurs som pekar p√• API.
+
+
+
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
@@ -67,6 +71,7 @@ app.Run();
 
 
 
+
 //UI <-> API(REFERERAR INTE TILL VARANDRA) 
 //CORS OCH BASEADRESS HTTP 
 //API -> BLL & SHARED(CLASS LIBRARY(DTO) 
@@ -74,14 +79,14 @@ app.Run();
 //DAL -> SHARED
 
 //SCENARIO
-//Anv‰ndare som svarar pÂ en frÂga
+//Anv√§ndare som svarar p√• en fr√•ga
 //1. UI -> skickar svaret till API
 //2. API -> tar emot svaret och skickar det vidare till BLL(anropa service)
-//3. BLL -> tar emot svaret och r‰knar r‰tt/fel och skickar det vidare till DAL(3 Services POST api/quiz/answer)
+//3. BLL -> tar emot svaret och r√§knar r√§tt/fel och skickar det vidare till DAL(3 Services POST api/quiz/answer)
 //4. DAL -> tar emot svaret och sparar det i databasen
-//5. BLL -> r‰kna progression
+//5. BLL -> r√§kna progression
 //6. API -> skickar progressionen tillbaka till UI
-//7. UI -> visar progressionen fˆr anv‰ndaren
+//7. UI -> visar progressionen f√∂r anv√§ndaren
 
 
 //UI -> BLL -> DAL
@@ -89,6 +94,6 @@ app.Run();
 
 //UI -> PAGES
 //API -> ENDPOINTS POST GET OSV, POST API/AI/FEEDBACK, GET API/AI/PROGRESS
-//BLL -> LOGIK, RƒTT FEL , PROGRESSION, SERVICES 
-//DAL -> MIGRATION, DBCONTEXT, MODELLER(ENDAST F÷R DATABAS). 
-//SHARED -> DTO, OBJEKT SOM ANVƒNDS MELLAN LAGER, KAN INTE REFERERA TILL DAL, BLL ELLER API.
+//BLL -> LOGIK, R√ÑTT FEL , PROGRESSION, SERVICES 
+//DAL -> MIGRATION, DBCONTEXT, MODELLER(ENDAST F√ñR DATABAS). 
+//SHARED -> DTO, OBJEKT SOM ANV√ÑNDS MELLAN LAGER, KAN INTE REFERERA TILL DAL, BLL ELLER API.
