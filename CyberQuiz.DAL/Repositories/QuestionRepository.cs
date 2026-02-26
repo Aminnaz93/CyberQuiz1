@@ -7,9 +7,9 @@ namespace CyberQuiz.DAL.Repositories
 {
     public class QuestionRepository
     {
-        private readonly CyberQuizDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public QuestionRepository(CyberQuizDbContext context)
+        public QuestionRepository(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -23,6 +23,12 @@ namespace CyberQuiz.DAL.Repositories
         {
             return _context.Questions.FirstOrDefault(q => q.Id == id);
         }
+
+        public Question GetQuestionBySubcategory(int subCategory)
+        {
+            return _context.Questions.FirstOrDefault(q => q.SubCategoryId == subCategory);
+        }
+
 
         public void AddQuestion(Question question)
         {
@@ -46,3 +52,4 @@ namespace CyberQuiz.DAL.Repositories
             }
         }
     }
+}
