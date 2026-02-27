@@ -19,19 +19,21 @@ namespace CyberQuiz.DAL.Repositories
 
         public async Task<IEnumerable<Category>> GetAllCategoriesAsync()
         {
-            return await _context.Categories.ToListAsync();
+            return await _context.Categories
+                .OrderBy(c => c.Id)  // Alltid samma ordning
+                .ToListAsync();
         }
 
         public async Task<Category?> GetCategoryByIdAsync(int id)
         {
             return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
         }
-
-        // Lägg till i interface:
+                
         public async Task<IEnumerable<Category>> GetAllCategoriesWithSubCategoriesAsync()
         {
             return await _context.Categories
                 .Include(c => c.SubCategories)
+                .OrderBy(c => c.Id)  // Alltid samma ordning
                 .ToListAsync();
         }
         public async Task<Category?> GetCategoryWithSubCategoriesAsync(int id)
