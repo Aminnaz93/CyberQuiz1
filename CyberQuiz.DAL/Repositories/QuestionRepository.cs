@@ -1,9 +1,5 @@
 ﻿using CyberQuiz.DAL.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CyberQuiz.DAL.Repositories
 {
@@ -25,12 +21,17 @@ namespace CyberQuiz.DAL.Repositories
 
         public async Task<Question?> GetQuestionByIdAsync(int id)
         {
-            return await _context.Questions.FirstOrDefaultAsync(q => q.Id == id);
+            return await _context.Questions
+                .Include(q => q.AnswerOptions)
+                .FirstOrDefaultAsync(q => q.Id == id);
         }
 
         public async Task<IEnumerable<Question>> GetQuestionBySubcategoryAsync(int subCategory)
         {
-            return await _context.Questions.Where(q => q.SubCategoryId == subCategory).ToListAsync();
+            return await _context.Questions
+                .Include(q => q.AnswerOptions)
+                .Where(q => q.SubCategoryId == subCategory)
+                .ToListAsync();
         }
 
         //Tveksamt om vi kommer att uppdatera frågebanken, men det skadar ju aldrig!

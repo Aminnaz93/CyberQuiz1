@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CyberQuiz.DAL.Models
+﻿namespace CyberQuiz.DAL.Models
 {
     // Ett svarsalternativ på en fråga (3 st per fråga, varav 1 korrekt)
     public class AnswerOption

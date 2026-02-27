@@ -1,6 +1,5 @@
 using CyberQuiz.DAL.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace CyberQuiz.DAL
 {
@@ -38,7 +37,7 @@ namespace CyberQuiz.DAL
             };
 
             modelBuilder.Entity<SubCategory>().HasData(subCategories);
-            
+
             SeedQuestions(modelBuilder);
         }
 
