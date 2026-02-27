@@ -1,3 +1,5 @@
+using CyberQuiz.BLL.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 builder.Services.AddControllers();
+// När någon frågar efter IQuizService får de en QuizService tillbaka.
+builder.Services.AddScoped<IQuizService, QuizService>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
