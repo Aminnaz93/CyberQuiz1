@@ -1,7 +1,9 @@
 ﻿@page "/categories"
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
-@inject HttpClient Http @* Används för att anropa API *@
+@* Används för att anropa API *@
+@inject HttpClient Http 
+@using CyberQuiz.Shared.DTOs @* Importerar delade DTO-klasser *@
 
 <PageTitle>Kategorier</PageTitle>
 
@@ -18,18 +20,12 @@
         @* Loopar igenom listan och skapar ett kort per kategori *@
         @foreach (var category in categories)
         {
-            @* true = "locked" → nedtonat, false = "unlocked" → klickbart *@
-            <div class="category-card @(category.IsLocked ? "locked" : "unlocked")"
+            @* Alla kategorier är alltid klickbara *@
+            <div class="category-card"
                  @onclick="() => OnCategoryClick(category)">
 
-                @* Hänglås visas bara om kategorin är låst *@
-                @if (category.IsLocked)
-                {
-                    <span class="lock-icon">🔒</span>
-                }
-
                 <h3>@category.Name</h3>
-                <p>30 frågor</p>
+                <p>@category.SubCategories.Count subkategorier</p>
 
             </div>
         }
@@ -55,14 +51,9 @@
         cursor: pointer;
     }
 
-        .category-card.unlocked:hover {
+        .category-card:hover {
             border-color: #7c3aed;
             background-color: #f3f0ff;
-        }
-
-        .category-card.locked {
-            opacity: 0.6;
-            cursor: not-allowed;
         }
 
         .category-card h3 {
@@ -75,38 +66,23 @@
             color: #666;
             font-size: 0.9rem;
         }
-
-    .lock-icon {
-        font-size: 1.2rem;
-    }
 </style>
 
 @code {
     // Null = håller på att laddas, annars innehåller listan kategorier från API
-    private List<CategoryViewModel>? categories = null;
+    private List<CategoryDto>? categories = null;
 
     // Körs automatiskt när sidan laddas
     protected override async Task OnInitializedAsync()
     {
         // Hämtar kategorier från API → CategoriesController → BLL → DAL
-        categories = await Http.GetFromJsonAsync<List<CategoryViewModel>>("api/categories");
+        categories = await Http.GetFromJsonAsync<List<CategoryDto>>("api/categories");
     }
 
-    // Körs när användaren klickar på ett kort
-    private void OnCategoryClick(CategoryViewModel category)
+    // Körs när användaren klickar på ett kort — alla kategorier är öppna
+    private void OnCategoryClick(CategoryDto category)
     {
-        if (!category.IsLocked)
-        {
-            // Navigerar till ex. /subcategories/1
-            NavigationManager.NavigateTo($"/subcategories/{category.Id}");
-        }
-    }
-
-    // Lokal modell - måste matcha det som CategoriesController skickar tillbaka
-    private class CategoryViewModel
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public bool IsLocked { get; set; }
+        // Navigerar till ex. /subcategories/1
+        NavigationManager.NavigateTo($"/subcategories/{category.Id}");
     }
 }
