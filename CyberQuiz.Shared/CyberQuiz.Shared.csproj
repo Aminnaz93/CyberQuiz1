@@ -10,4 +10,8 @@
     <Folder Include="Models\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CyberQuiz.DAL\CyberQuiz.DAL.csproj" />
+  </ItemGroup>
+
 </Project>
