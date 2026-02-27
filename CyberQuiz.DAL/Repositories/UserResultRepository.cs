@@ -51,7 +51,7 @@ namespace CyberQuiz.DAL.Repositories
             return await _context.UserResults
                 .Include(ur => ur.Question)
                 .Where(ur => ur.UserId == userId && ur.Question.SubCategoryId == subCategoryId)
-                .OrderBy(ur => ur.AnsweredAt)
+                .OrderByDescending(ur => ur.AnsweredAt)
                 .ToListAsync();
         }
         //Spara ett svar
