@@ -22,14 +22,59 @@ namespace CyberQuiz.BLL.Services
         // samt vilket svarsalternativ som var korrekt
         public async Task<AnswerResultDto> SubmitAnswerAsync(AnswerSubmitDto answerSubmit)
         {
-            throw new NotImplementedException(); //Implementera
+            // Hämta frågan med svarsalternativ för att kunna kolla IsCorrect och hitta rätt svar
+            var question = await _questionRepository.GetQuestionByIdAsync(answerSubmit.QuestionId);
+            if (question == null)
+                throw new ArgumentException($"Fråga med id {answerSubmit.QuestionId} hittades inte.");
+
+            // Kolla om det valda svarsalternativet är korrekt
+            var selectedOption = question.AnswerOptions
+                .FirstOrDefault(a => a.Id == answerSubmit.SelectedAnswerOptionId);
+            if (selectedOption == null)
+                throw new ArgumentException($"Svarsalternativ med id {answerSubmit.SelectedAnswerOptionId} hittades inte.");
+
+            // Hitta det korrekta svarsalternativet
+            var correctOption = question.AnswerOptions.First(a => a.IsCorrect);
+
+            // Spara användarens svar i databasen
+            var userResult = new UserResult
+            {
+                UserId = answerSubmit.UserId,
+                QuestionId = answerSubmit.QuestionId,
+                AnswerOptionId = answerSubmit.SelectedAnswerOptionId,
+                IsCorrect = selectedOption.IsCorrect,
+                AnsweredAt = DateTimeOffset.UtcNow
+            };
+            await _userResultRepository.AddUserResultAsync(userResult);
+
+            return new AnswerResultDto
+            {
+                IsCorrect = selectedOption.IsCorrect,
+                CorrectAnswerOptionId = correctOption.Id
+            };
         }
 
-        // Hämtar användarens progression för alla subkategorier —
-        // används på profilsidan för att visa en överblick av hur långt användaren kommit
+        // Hämtar användarens progression för alla subkategorier
+        // För överblick på typ startsidan eller liknande
         public async Task<List<ProgressionDto>> GetProgressionByUserAsync(string userId)
         {
-           throw new NotImplementedException(); //Implementera
+            // Hämtar alla resultat för användaren, inklusive fråga (för att komma åt SubCategoryId)
+            var userResults = await _userResultRepository.GetAllUserResultsByUserIdAsync(userId);
+
+            // Grupperar per subkategori och räknar ut om användaren nått >= 80% rätt
+            //Ska returnera användarId, SubCategoryId och om kategorin är klar (>= 80% rätt) eller inte 
+            var progression = userResults
+                .GroupBy(ur => ur.Question.SubCategoryId)
+                .Select(group => new ProgressionDto
+                {
+                    UserId = userId,
+                    SubCategoryId = group.Key,
+                    IsPassed = (double)group.Count(r => r.IsCorrect) / group.Count() >= QuizConstants.MinPassScore
+                })
+                .ToList();
+
+            return progression;
+            
         }
     }
 }
