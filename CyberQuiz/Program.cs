@@ -12,7 +12,10 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 //HTTP resurs som pekar på API.
-
+/*builder.Services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri("https://localhost:????/") // Din API-adress
+});*/
 
 
 builder.Services.AddCascadingAuthenticationState();
