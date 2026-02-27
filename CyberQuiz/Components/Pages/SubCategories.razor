@@ -1,0 +1,101 @@
+﻿@page "/subcategories/{CategoryId:int}"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject HttpClient Http
+@using CyberQuiz.Shared.DTOs
+
+<PageTitle>Subkategorier</PageTitle>
+
+<div class="subcategories-container">
+    <h2>Välj en subkategori</h2>
+
+    @if (subCategories == null)
+    {
+        <p>Laddar subkategorier...</p>
+    }
+    else
+    {
+        @foreach (var sub in subCategories)
+        {
+            <div class="sub-card @(sub.IsUnlocked ? "unlocked" : "locked")"
+                 @onclick="() => OnSubCategoryClick(sub)">
+
+                @if (!sub.IsUnlocked)
+                {
+                    <span>🔒</span>
+                }
+
+                <h3>@sub.Name</h3>
+                <p>@sub.QuestionCount frågor</p>
+
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .subcategories-container {
+        max-width: 500px;
+        margin: 2rem auto;
+        padding: 1rem;
+    }
+
+        .subcategories-container h2 {
+            margin-bottom: 1.5rem;
+        }
+
+    .sub-card {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        background: white;
+    }
+
+        .sub-card.unlocked {
+            cursor: pointer;
+        }
+
+            .sub-card.unlocked:hover {
+                border-color: #7c3aed;
+                background-color: #f3f0ff;
+            }
+
+        .sub-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .sub-card h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+        }
+
+        .sub-card p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+</style>
+
+@code {
+    [Parameter]
+    public int CategoryId { get; set; }
+
+    private List<SubCategoryDto>? subCategories = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Hämtar subkategorier från API → SubCategoriesController → BLL → DAL
+        subCategories = await Http.GetFromJsonAsync<List<SubCategoryDto>>($"api/subcategories/{CategoryId}");
+    }
+
+    private void OnSubCategoryClick(SubCategoryDto sub)
+    {
+        if (sub.IsUnlocked)
+        {
+            // Navigerar till ex. /quiz/1
+            NavigationManager.NavigateTo($"/quiz/{sub.Id}");
+        }
+    }
+}
