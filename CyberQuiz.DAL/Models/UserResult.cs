@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CyberQuiz.DAL.Models
+﻿namespace CyberQuiz.DAL.Models
 {
     // Sparar en användares svar på en fråga (för resultatspårning och progresshantering)
     public class UserResult

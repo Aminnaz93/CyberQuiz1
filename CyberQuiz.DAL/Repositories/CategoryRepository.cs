@@ -1,9 +1,5 @@
 ﻿using CyberQuiz.DAL.Models;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CyberQuiz.DAL.Repositories
 {
@@ -28,7 +24,7 @@ namespace CyberQuiz.DAL.Repositories
         {
             return await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
         }
-                
+
         public async Task<IEnumerable<Category>> GetAllCategoriesWithSubCategoriesAsync()
         {
             return await _context.Categories
@@ -39,7 +35,7 @@ namespace CyberQuiz.DAL.Repositories
         public async Task<Category?> GetCategoryWithSubCategoriesAsync(int id)
         {
             return await _context.Categories
-                .Include (c => c.SubCategories)
+                .Include(c => c.SubCategories)
                 .FirstOrDefaultAsync(c => c.Id == id);
         }
     }
