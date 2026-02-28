@@ -18,7 +18,7 @@
     }
     else
     {
-        <h2>❓ Frågor</h2>
+        <h2>Frågor</h2>
 
         @* Loopar igenom alla frågor och visar dem på samma sida *@
         @foreach (var question in questions)
@@ -45,11 +45,11 @@
                     var result = results[question.Id];
                     @if (result.IsCorrect)
                     {
-                        <p class="feedback correct">✅ Rätt svar!</p>
+                        <p class="feedback correct">Rätt svar!</p>
                     }
                     else
                     {
-                        <p class="feedback incorrect">❌ Fel svar!</p>
+                        <p class="feedback incorrect">Fel svar!</p>
                     }
                 }
             </div>
