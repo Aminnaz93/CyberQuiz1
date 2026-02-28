@@ -1,0 +1,238 @@
+﻿@page "/quiz/{SubCategoryId:int}"
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@using CyberQuiz.Shared.DTOs
+
+<PageTitle>Quiz</PageTitle>
+
+<div class="quiz-container">
+
+    @if (questions == null)
+    {
+        <p>Laddar frågor...</p>
+    }
+    else if (!questions.Any())
+    {
+        <p>Inga frågor hittades.</p>
+    }
+    else
+    {
+        <h2>❓ Frågor</h2>
+
+        @* Loopar igenom alla frågor och visar dem på samma sida *@
+        @foreach (var question in questions)
+        {
+            <div class="question-card">
+                <p class="question-text">@question.Text</p>
+
+                @* Loopar igenom svarsalternativen för varje fråga *@
+                @foreach (var option in question.AnswerOptions)
+                {
+                    @* Färgar svaret grönt/rött om användaren redan svarat *@
+                    var cssClass = GetAnswerClass(question.Id, option.Id);
+
+                    <button class="answer-btn @cssClass"
+                            @onclick="() => SubmitAnswer(question.Id, option.Id)"
+                            disabled="@HasAnswered(question.Id)">
+                        @option.Text
+                    </button>
+                }
+
+                @* Visar rätt/fel-meddelande direkt efter svar *@
+                @if (results.ContainsKey(question.Id))
+                {
+                    var result = results[question.Id];
+                    @if (result.IsCorrect)
+                    {
+                        <p class="feedback correct">✅ Rätt svar!</p>
+                    }
+                    else
+                    {
+                        <p class="feedback incorrect">❌ Fel svar!</p>
+                    }
+                }
+            </div>
+        }
+
+        @* Visar knapp för att gå tillbaka när alla frågor är besvarade *@
+        @if (results.Count == questions.Count)
+        {
+            <div class="result-summary">
+                <p>Du fick @results.Values.Count(r => r.IsCorrect) av @questions.Count rätt!</p>
+                <button class="back-btn" @onclick="GoBack">← Tillbaka till subkategorier</button>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .quiz-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 1rem;
+    }
+
+        .quiz-container h2 {
+            margin-bottom: 1.5rem;
+        }
+
+    .question-card {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        background: white;
+    }
+
+    .question-text {
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .answer-btn {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
+        border: 2px solid #ccc;
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        text-align: left;
+        font-size: 0.95rem;
+        transition: background 0.2s;
+    }
+
+        .answer-btn:hover:not(:disabled) {
+            border-color: #7c3aed;
+            background: #f3f0ff;
+        }
+
+        .answer-btn:disabled {
+            cursor: not-allowed;
+        }
+
+        /* Grönt om rätt svar */
+        .answer-btn.correct {
+            border-color: #16a34a;
+            background: #dcfce7;
+        }
+
+        /* Rött om fel svar */
+        .answer-btn.incorrect {
+            border-color: #dc2626;
+            background: #fee2e2;
+        }
+
+    .feedback {
+        margin-top: 0.75rem;
+        font-weight: 600;
+    }
+
+        .feedback.correct {
+            color: #16a34a;
+        }
+
+        .feedback.incorrect {
+            color: #dc2626;
+        }
+
+    .result-summary {
+        text-align: center;
+        padding: 1.5rem;
+        border: 2px solid #7c3aed;
+        border-radius: 8px;
+        background: #f3f0ff;
+    }
+
+        .result-summary p {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+    .back-btn {
+        padding: 0.75rem 1.5rem;
+        background: #7c3aed;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+        .back-btn:hover {
+            background: #6d28d9;
+        }
+</style>
+
+@code {
+    // Tar emot subCategoryId från URL:en, ex. /quiz/1
+    [Parameter]
+    public int SubCategoryId { get; set; }
+
+    // Listan med frågor från API
+    private List<QuestionDto>? questions = null;
+
+    // Sparar resultatet per fråga — key = questionId, value = AnswerResultDto
+    private Dictionary<int, AnswerResultDto> results = new();
+
+    // Körs automatiskt när sidan laddas
+    protected override async Task OnInitializedAsync()
+    {
+        // Hämtar frågor från API → QuizController → BLL → DAL
+        questions = await Http.GetFromJsonAsync<List<QuestionDto>>($"api/quiz/{SubCategoryId}");
+    }
+
+    // Körs när användaren klickar på ett svarsalternativ
+    private async Task SubmitAnswer(int questionId, int selectedOptionId)
+    {
+        // Skickar svaret till API → QuizController → BLL → DAL
+        var result = await Http.PostAsJsonAsync("api/quiz/answer", new AnswerSubmitDto
+        {
+            QuestionId = questionId,
+            SelectedAnswerOptionId = selectedOptionId,
+            UserId = "" // API sätter userId automatiskt från inloggad användare
+        });
+
+        if (result.IsSuccessStatusCode)
+        {
+            // Sparar resultatet så att rätt/fel visas direkt
+            var answerResult = await result.Content.ReadFromJsonAsync<AnswerResultDto>();
+            if (answerResult != null)
+                results[questionId] = answerResult;
+        }
+    }
+
+    // Returnerar CSS-klass för ett svarsalternativ baserat på om det är rätt/fel
+    private string GetAnswerClass(int questionId, int optionId)
+    {
+        if (!results.ContainsKey(questionId))
+            return "";
+
+        var result = results[questionId];
+
+        // Grönt om det är det rätta svaret
+        if (optionId == result.CorrectAnswerOptionId)
+            return "correct";
+
+        // Rött om användaren valde detta men det var fel
+        if (optionId != result.CorrectAnswerOptionId && results[questionId].IsCorrect == false)
+            return "incorrect";
+
+        return "";
+    }
+
+    // Kollar om användaren redan svarat på en fråga
+    private bool HasAnswered(int questionId)
+    {
+        return results.ContainsKey(questionId);
+    }
+
+    // ttar en tillbaka till subkategorisidan
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo($"/subcategories/{SubCategoryId}");
+    }
+}
