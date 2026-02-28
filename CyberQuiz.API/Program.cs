@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 // När någon frågar efter IQuizService får de en QuizService tillbaka.
 builder.Services.AddScoped<IQuizService, QuizService>();
+// När någon frågar efter IUserResultService får de en UserResultService tillbaka.
+builder.Services.AddScoped<IUserResultService, UserResultService>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
