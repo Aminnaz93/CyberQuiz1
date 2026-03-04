@@ -122,6 +122,64 @@ namespace CyberQuiz.API.Controllers
         }
 
 
+        // PUT api/auth/email
+        // UI skickar userId, nuvarande lösenord och ny email hit
+        [HttpPut("email")]
+        [Authorize]
+        public async Task<IActionResult> ChangeEmail([FromBody] ChangeEmailDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Hämta userId från token istället för dto
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return Unauthorized();
+
+            var result = await _userService.ChangeEmailAsync(userId, dto.CurrentPassword, dto.NewEmail);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError(string.Empty, error.Description);
+
+                return BadRequest(ModelState);
+            }
+
+            return Ok("Email har bytts.");
+        }
+
+
+
+        // PUT api/auth/password
+        // UI skickar userId, nuvarande lösenord och nytt lösenord hit
+        // PUT api/auth/password
+        [HttpPut("password")]
+        [Authorize]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Hämta userId från token istället för dto
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return Unauthorized();
+
+            var result = await _userService.ChangePasswordAsync(userId, dto.CurrentPassword, dto.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError(string.Empty, error.Description);
+
+                return BadRequest(ModelState);
+            }
+
+            return Ok("Lösenord har bytts.");
+        }
+
+
         // HJÄLPMETOD — skapar en JWT-token för en användare
         private string GenerateJwtToken(ApplicationUser user)
         {

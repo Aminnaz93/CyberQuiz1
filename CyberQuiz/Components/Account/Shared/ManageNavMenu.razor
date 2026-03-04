@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Identity
+﻿@* @using Microsoft.AspNetCore.Identity
 
 
 @inject SignInManager<ApplicationUser> SignInManager
@@ -38,3 +38,4 @@
         hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
     }
 }
+ *@
