@@ -1,4 +1,5 @@
 @CyberQuiz.API_HostAddress = http://localhost:5156
+@timeout = 120000
 
 ### Health Check - Testa om Ollama körs
 GET {{CyberQuiz.API_HostAddress}}/api/ai/health
@@ -6,15 +7,17 @@ Accept: application/json
 
 ###
 
-### Get AI Recommendations - TEST UTAN AUTENTISERING (ändra testUserId till en riktig användare från din databas)
+### Get AI Recommendations - TEST UTAN AUTENTISERING (timeout: 2 minuter)
 GET {{CyberQuiz.API_HostAddress}}/api/ai/recommendations?testUserId=1e9cc9e9-d0fc-440a-be2d-bfc89c0de7fa
 Accept: application/json
+Request-Timeout: {{timeout}}
 
 ###
 
 ### Get AI Recommendations - Specifik kategori
-GET {{CyberQuiz.API_HostAddress}}/api/ai/recommendations?testUserId=test-user-123&subCategoryId=1
+GET {{CyberQuiz.API_HostAddress}}/api/ai/recommendations?testUserId=1e9cc9e9-d0fc-440a-be2d-bfc89c0de7fa&subCategoryId=4
 Accept: application/json
+Request-Timeout: {{timeout}}
 
 ###
 
@@ -22,5 +25,6 @@ Accept: application/json
 # GET {{CyberQuiz.API_HostAddress}}/api/ai/recommendations
 # Accept: application/json
 # Authorization: Bearer YOUR_TOKEN_HERE
+# Request-Timeout: {{timeout}}
 
 ###

@@ -26,11 +26,8 @@ namespace CyberQuiz.Shared.DTOs
         
         // Starkaste kategorin
         public string? StrongestCategory { get; set; }
-        
+
         // När analysen gjordes
         public DateTime GeneratedAt { get; set; } = DateTime.UtcNow;
-        
-        // Uppskattad studietid i timmar
-        public int EstimatedStudyHours { get; set; }
     }
 }

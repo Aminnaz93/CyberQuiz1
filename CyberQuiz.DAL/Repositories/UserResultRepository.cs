@@ -16,14 +16,16 @@ namespace CyberQuiz.DAL.Repositories
         {
             _context = context;
         }
-        // alla UserResult inklusive fråga och svarsalternativ
+        // alla UserResult inklusive fråga och svarsalternativ för respektive subkategori
         public async Task<IEnumerable<UserResult>> GetAllUserResultsByUserIdAsync(string userId)
         {
             return await _context.UserResults
                 .Include(ur => ur.Question)
+                    .ThenInclude(q => q.SubCategory)  // Lägg till SubCategory!
                 .Include(ur => ur.AnswerOption)
+                .Include(ur => ur.Question.AnswerOptions)  // För att få rätt svar
                 .Where(ur => ur.UserId == userId)
-                .OrderByDescending(ur => ur.AnsweredAt)  // Senaste först
+                .OrderByDescending(ur => ur.AnsweredAt)
                 .ToListAsync();
         }
         // för att kolla om användaren svarat på en fråga och vad, i så fall

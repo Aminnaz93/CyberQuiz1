@@ -697,7 +697,7 @@ namespace CyberQuiz.DAL
             answerOptions.Add(new AnswerOption { Id = answerOptionId++, Text = "Att aldrig använda internet", IsCorrect = false, QuestionId = questionId });
             questionId++;
 
-            // Save all questions and answers to database
+            // Spara alla frågor o svar i db
             modelBuilder.Entity<Question>().HasData(questions);
             modelBuilder.Entity<AnswerOption>().HasData(answerOptions);
         }

@@ -11,6 +11,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Förläng Kestrel request timeout för AI-endpoints
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+    serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(2);
+});
 
 //Lägg till cors policy.
 builder.Services.AddCors(options =>
@@ -46,12 +52,12 @@ builder.Services.AddScoped<IUserService, UserService>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// HttpClient för Ollama
+// HttpClient för Ollama med förlängd timeout för AI-generering
 builder.Services.AddHttpClient("Ollama", client =>
 {
     var ollamaBaseUrl = builder.Configuration["Ollama:BaseUrl"] ?? "http://localhost:11434";
     client.BaseAddress = new Uri(ollamaBaseUrl);
-    client.Timeout = TimeSpan.FromSeconds(60);
+    client.Timeout = TimeSpan.FromMinutes(5); // 5 minuter för AI-generering (JSON-mode är långsammare)
 });
 
 //var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -116,7 +122,7 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-// Seeda testanvändare i development
+// Seeda testanvändare och quiz-resultat i development
 if (app.Environment.IsDevelopment())
 {
     using (var scope = app.Services.CreateScope())
@@ -125,11 +131,12 @@ if (app.Environment.IsDevelopment())
         try
         {
             await UserSeeder.SeedTestUserAsync(services);
+            await UserResultSeeder.SeedTestUserResultsAsync(services);
         }
         catch (Exception ex)
         {
             var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while seeding test user.");
+            logger.LogError(ex, "An error occurred while seeding test data.");
         }
     }
 }

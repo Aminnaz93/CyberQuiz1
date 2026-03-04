@@ -11,25 +11,7 @@ namespace CyberQuiz.Shared.DTOs
         
         // Rekommenderade webbresurser
         public List<ResourceDto> RecommendedResources { get; set; } = new();
-        
-        // Antal frågor i detta ämne
-        public int QuestionsInTopic { get; set; }
-        
-        // Antal korrekta svar i detta ämne
-        public int CorrectAnswers { get; set; }
-        
-        // Framgångsgrad för ämnet (0-100)
-        public double TopicSuccessRate { get; set; }
-        
-        // Prioritet (1 = viktigast)
-        public int Priority { get; set; }
-        
-        // Svårighetsgrad (beginner/intermediate/advanced)
-        public string DifficultyLevel { get; set; } = "intermediate";
-        
-        // Uppskattad studietid i timmar
-        public int EstimatedStudyTimeHours { get; set; }
-        
+
         // Specifika koncept att fokusera på
         public List<string> KeyConceptsToFocus { get; set; } = new();
     }

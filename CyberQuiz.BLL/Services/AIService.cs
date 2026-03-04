@@ -16,6 +16,7 @@ namespace CyberQuiz.BLL.Services
         private readonly string _ollamaBaseUrl;
         private readonly string _modelName;
 
+        //Dependency injection av services
         public AIService(
             IUserResultRepository userResultRepository,
             IHttpClientFactory httpClientFactory,
@@ -33,8 +34,11 @@ namespace CyberQuiz.BLL.Services
             string userId,
             int? subCategoryId = null)
         {
+            _logger.LogInformation("GetStudyRecommendationsAsync called for userId: {UserId}", userId);
+
             // 1. Hämta användarens resultat
             var userResults = await _userResultRepository.GetAllUserResultsByUserIdAsync(userId);
+            _logger.LogInformation("Retrieved {Count} user results", userResults.Count());
 
             if (!userResults.Any())
             {
@@ -50,9 +54,11 @@ namespace CyberQuiz.BLL.Services
             {
                 userResults = userResults.Where(ur =>
                     ur.Question.SubCategoryId == subCategoryId.Value);
+                _logger.LogInformation("Filtered to {Count} results for subCategoryId: {SubCategoryId}", 
+                    userResults.Count(), subCategoryId.Value);
             }
 
-            // 3. Analysera resultat per subkategori
+            // 3. Analysera resultat per subkategori baserat på antal svarade frågor och andel rätt svar
             var analysis = userResults
                 .GroupBy(ur => new
                 {
@@ -64,6 +70,7 @@ namespace CyberQuiz.BLL.Services
                     SubCategoryName = g.Key.SubCategoryName,
                     TotalQuestions = g.Count(),
                     CorrectAnswers = g.Count(ur => ur.IsCorrect),
+                    // Lista på felaktiga svar (max 3 visas i svarsprompten)
                     IncorrectQuestions = g.Where(ur => !ur.IsCorrect)
                         .Select(ur => new IncorrectQuestionInfo
                         {
@@ -74,70 +81,83 @@ namespace CyberQuiz.BLL.Services
                         })
                         .ToList()
                 })
+                // Sorterar från sämst till bäst (för att identifiera svaga områden först)
                 .OrderBy(a => (double)a.CorrectAnswers / a.TotalQuestions)
                 .ToList();
 
+            _logger.LogInformation("Analyzed {Count} categories", analysis.Count);
+
             // 4. Bygg prompt för Ollama
             var prompt = BuildPromptForOllama(analysis);
+            _logger.LogInformation("Built prompt, length: {Length} characters", prompt.Length);
 
             // 5. Anropa Ollama
+            _logger.LogInformation("Calling Ollama API...");
             var aiResponse = await CallOllamaAsync(prompt);
+            _logger.LogInformation("Ollama responded with {Length} characters", aiResponse.Length);
 
             // 6. Parsa AI-svar och returnera
-            return ParseAIResponse(aiResponse, analysis, userResults);
+            var result = ParseAIResponse(aiResponse, analysis, userResults);
+            _logger.LogInformation("Returning recommendations with {Count} items", result.Recommendations.Count);
+
+            return result;
         }
 
         private string BuildPromptForOllama(List<CategoryAnalysis> analysis)
         {
+            //Det blev konstiga svar med svenska, så det fick bli engelska istället
             var sb = new StringBuilder();
-            sb.AppendLine("Du är en expert inom cybersäkerhet och hjälper studenter att förbättra sina kunskaper.");
-            sb.AppendLine("Analysera följande quiz-resultat och ge konkreta studieråd:");
+            sb.AppendLine("You are a cybersecurity expert. Analyze quiz results and provide study recommendations.");
             sb.AppendLine();
+            sb.AppendLine("Quiz Results:");
 
             foreach (var category in analysis)
             {
                 var successRate = (double)category.CorrectAnswers / category.TotalQuestions * 100;
-                sb.AppendLine($"Kategori: {category.SubCategoryName}");
-                sb.AppendLine($"Resultat: {category.CorrectAnswers}/{category.TotalQuestions} rätt ({successRate:F1}%)");
+                sb.AppendLine($"- {category.SubCategoryName}: {category.CorrectAnswers}/{category.TotalQuestions} ({successRate:F0}%)");
 
-                if (category.IncorrectQuestions.Count > 0)
+                if (category.IncorrectQuestions.Count > 0 && category.IncorrectQuestions.Count <= 3)
                 {
-                    sb.AppendLine($"Totalt {category.IncorrectQuestions.Count} felaktiga svar.");
-
-                    var examplesToShow = Math.Min(5, category.IncorrectQuestions.Count);
-                    sb.AppendLine($"Exempel på {examplesToShow} av dessa:");
-
-                    foreach (var q in category.IncorrectQuestions.Take(examplesToShow))
+                    sb.AppendLine($"  Mistakes:");
+                    //analysera max 3 felaktiga svar, för att inte prompten ska bli för lång
+                    foreach (var q in category.IncorrectQuestions.Take(3))
                     {
-                        sb.AppendLine($"  - Fråga: {q.QuestionText}");
-                        sb.AppendLine($"    Svarade: {q.UserAnswer} (Rätt: {q.CorrectAnswer})");
+                        sb.AppendLine($"  * {q.QuestionText}");
                     }
                 }
-                sb.AppendLine();
             }
 
-            sb.AppendLine("Ge rekommendationer i följande JSON-format:");
+            sb.AppendLine();
+            sb.AppendLine("Generate valid JSON with ONLY these fields:");
+
+            //tydlig instruktion hur svaret ska vara formatterat
             sb.AppendLine(@"{
-  ""summary"": ""Övergripande analys på svenska"",
+  ""summary"": ""2-3 sentences analyzing strengths and weaknesses"",
   ""recommendations"": [
     {
-      ""topic"": ""Ämnesområde"",
-      ""reason"": ""Varför studera detta"",
-      ""resources"": [
+      ""topic"": ""Phishing Detection"",
+      ""reason"": ""Only 33% success rate indicates need for improvement"",
+      ""recommendedResources"": [
         {
-          ""title"": ""Resurstitel"",
-          ""url"": ""https://....."",
-          ""description"": ""Beskrivning av resursen"",
+          ""title"": ""OWASP Phishing Guide"",
+          ""url"": ""https://owasp.org/phishing"",
+          ""description"": ""Learn to identify phishing attacks"",
           ""type"": ""article""
         }
-      ]
+      ],
+      ""keyConceptsToFocus"": [""Email verification"", ""URL inspection"", ""Social engineering tactics""]
     }
   ]
 }");
+            sb.AppendLine();
+            sb.AppendLine("RULES:");
+            sb.AppendLine("1. Use ONLY the fields shown above (topic, reason, recommendedResources, keyConceptsToFocus)");
+            sb.AppendLine("2. Generate 2-3 recommendations with real URLs");
+            sb.AppendLine("3. Return ONLY valid JSON, no extra text");
 
             return sb.ToString();
         }
-
+        //Ollama API anrop
         private async Task<string> CallOllamaAsync(string prompt)
         {
             var request = new
@@ -145,15 +165,19 @@ namespace CyberQuiz.BLL.Services
                 model = _modelName,
                 prompt = prompt,
                 stream = false,
+                format = "json",
                 options = new
                 {
-                    temperature = 0.6,
-                    num_predict = 1500
+                    temperature = 0.3,    // Lägre = mer deterministisk JSON Inte så utsvävande svar
+                    num_predict = 1200,   // Ökat för att hinna generera hela JSON-svaret
+                    top_k = 40,           // Begränsar vokabulär (snabbare)
+                    top_p = 0.9           // bortser från de minst sannolika orden
                 }
             };
 
             try
             {
+                _logger.LogInformation("Sending request to Ollama with format=json, timeout=300s");
                 var response = await _httpClient.PostAsJsonAsync(
                     $"{_ollamaBaseUrl}/api/generate",
                     request);
@@ -161,6 +185,9 @@ namespace CyberQuiz.BLL.Services
                 response.EnsureSuccessStatusCode();
 
                 var result = await response.Content.ReadFromJsonAsync<OllamaResponse>();
+                _logger.LogInformation("Ollama raw response (first 200 chars): {Response}", 
+                    result?.Response?.Length > 200 ? result.Response.Substring(0, 200) : result?.Response);
+
                 return result?.Response ?? "Kunde inte generera rekommendationer.";
             }
             catch (HttpRequestException ex)
@@ -175,6 +202,7 @@ namespace CyberQuiz.BLL.Services
             }
         }
 
+        //Hantera svaret från Ollama
         private AIRecommendationResponseDto ParseAIResponse(
             string aiResponse,
             List<CategoryAnalysis> analysis,
@@ -182,6 +210,7 @@ namespace CyberQuiz.BLL.Services
         {
             try
             {
+                //För att undvika att få med inledande eller avslutande artighetsfraser o dyl
                 var jsonStart = aiResponse.IndexOf('{');
                 var jsonEnd = aiResponse.LastIndexOf('}') + 1;
 
@@ -194,6 +223,7 @@ namespace CyberQuiz.BLL.Services
 
                     if (parsed != null)
                     {
+                        //lägg till lite statistik
                         parsed.TotalQuestionsAnswered = userResults.Count();
                         parsed.CorrectAnswers = userResults.Count(ur => ur.IsCorrect);
                         parsed.SuccessRate = (double)parsed.CorrectAnswers / parsed.TotalQuestionsAnswered * 100;
@@ -239,7 +269,7 @@ namespace CyberQuiz.BLL.Services
                 Recommendations = new List<StudyRecommendationDto>()
             };
         }
-
+        //Testmetod att kalla innan man gör det riktiga anropet
         public async Task<bool> HealthCheckAsync()
         {
             try

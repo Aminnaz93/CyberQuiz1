@@ -10,6 +10,7 @@ namespace CyberQuiz.DAL.Data
         public static async Task SeedTestUserAsync(IServiceProvider serviceProvider)
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            //Loggning för att bättre följa seedningen och vad som ev går fel
             var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger("UserSeeder");
 
@@ -30,7 +31,7 @@ namespace CyberQuiz.DAL.Data
                 DisplayName = "Test User",
                 IsActive = true
             };
-
+            // sparar user i AspNetUsers-tabellen
             var result = await userManager.CreateAsync(testUser, "Password1234!");
 
             if (result.Succeeded)
