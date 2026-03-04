@@ -1,11 +1,13 @@
 ﻿using CyberQuiz.BLL.Services;
-using Microsoft.AspNetCore.Mvc;
 using CyberQuiz.Shared.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CyberQuiz.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class QuizController : ControllerBase
     {
         private readonly IQuizService _quizService;
