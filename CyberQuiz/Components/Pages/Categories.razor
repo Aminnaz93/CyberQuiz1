@@ -1,12 +1,9 @@
 ﻿@page "/categories"
-@attribute [Authorize]
 @rendermode InteractiveServer
 @inject HttpClient Http
 @inject NavigationManager NavigationManager
+@inject CyberQuiz.Services.AuthService AuthService
 @using CyberQuiz.Shared.DTOs
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Authorization
-
 
 <PageTitle>Kategorier</PageTitle>
 
@@ -35,21 +32,18 @@
 @code {
     private List<CategoryDto>? categories = null;
 
-    [CascadingParameter]
-    private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
-
     protected override async Task OnInitializedAsync()
     {
-        // Hämtar inloggad användares id
-        var authState = await AuthenticationStateTask;
-        var userId = authState.User.FindFirst(
-            System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        // Omdirigera till login om användaren inte är inloggad
+        if (!AuthService.IsLoggedIn)
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
 
-        if (userId == null) return;
-
-        // Skickar userId till API
+        // Skickar userId till API (HttpClient har redan Bearer-token satt av AuthService)
         categories = await Http.GetFromJsonAsync<List<CategoryDto>>(
-            $"api/categories?userId={userId}");
+            $"api/categories?userId={AuthService.UserId}");
     }
 
     private void OnCategoryClick(CategoryDto category)

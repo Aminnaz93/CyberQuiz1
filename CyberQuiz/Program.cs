@@ -19,13 +19,15 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 //HTTP resurs som pekar på API.
-builder.Services.AddScoped(sp => new HttpClient
+// Singleton för att AuthService (Singleton) ska kunna använda den
+builder.Services.AddSingleton(sp => new HttpClient
 {
     BaseAddress = new Uri("https://localhost:7088/")
 });
 
 //Authservice . minnet som håller koll på token och userID
-builder.Services.AddScoped<AuthService>();
+// Singleton = samma instans för hela appens livstid, token förloras inte vid navigering
+builder.Services.AddSingleton<AuthService>();
 
 
 

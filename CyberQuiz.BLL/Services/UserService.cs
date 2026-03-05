@@ -26,10 +26,22 @@ namespace CyberQuiz.BLL.Services
         }
 
 
-        //Home & Login --> 
+        //Home & Login -->
         public async Task<SignInResult> PasswordSignInAsync(string email, string password, bool isPersistent, bool lockoutOnFailure)
         {
-            return await _signInManager.PasswordSignInAsync(email, password, isPersistent, lockoutOnFailure);
+            // SignInManager.PasswordSignInAsync kräver UserName, inte email.
+            // Slå upp användaren via email och använd deras UserName för inloggning.
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return SignInResult.Failed;
+
+            // API använder JWT, inte cookies — SignInManager kan inte användas direkt.
+            // Validera lösenordet med UserManager istället.
+            var passwordValid = await _userManager.CheckPasswordAsync(user, password);
+            if (!passwordValid)
+                return SignInResult.Failed;
+
+            return SignInResult.Success;
         }
 
         //Login.razor -- med passkey (WebAuthn-credential i JSON-format) ??? - metoden tagen från Login.razor

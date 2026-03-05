@@ -1,5 +1,5 @@
 ﻿@page "/login"
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject NavigationManager NavigationManager
 @inject CyberQuiz.Services.AuthService AuthService
 @using System.ComponentModel.DataAnnotations
@@ -18,17 +18,17 @@
 
         <div class="form-floating mb-3">
             <input type="email" class="form-control" placeholder="name@example.com"
-                   @bind="email" />
+                   @bind="email" @bind:event="oninput" />
             <label>Email</label>
         </div>
 
         <div class="form-floating mb-3">
             <input type="password" class="form-control" placeholder="password"
-                   @bind="password" />
+                   @bind="password" @bind:event="oninput" />
             <label>Lösenord</label>
         </div>
 
-        <button class="w-100 btn btn-lg btn-primary" @onclick="LoginUser">Logga in</button>
+        <button class="w-100 btn btn-lg btn-primary" @onclick="LoginUser" disabled="@(!isReady)">Logga in</button>
 
         <hr />
         <p>Inget konto? <a href="/register">Registrera dig här</a></p>
@@ -40,16 +40,35 @@
     private string email = "";
     private string password = "";
     private string? errorMessage;
+    private bool isReady = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isReady = true;
+            StateHasChanged();
+        }
+    }
 
     private async Task LoginUser()
     {
         errorMessage = null;
 
-        var success = await AuthService.LoginAsync(email, password);
+        bool success;
+        try
+        {
+            success = await AuthService.LoginAsync(email, password);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Fel: {ex.Message}";
+            return;
+        }
 
         if (success)
         {
-            NavigationManager.NavigateTo("/categories");
+            NavigationManager.NavigateTo("/categories", forceLoad: true);
         }
         else
         {

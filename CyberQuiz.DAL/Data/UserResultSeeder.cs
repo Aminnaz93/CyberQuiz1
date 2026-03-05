@@ -16,10 +16,10 @@ namespace CyberQuiz.DAL.Data
             var logger = loggerFactory.CreateLogger("UserResultSeeder");
 
             // Hämta testanvändaren
-            var testUser = await userManager.FindByNameAsync("user");
+            var testUser = await userManager.FindByEmailAsync("user@test.com");
             if (testUser == null)
             {
-                logger.LogWarning("Test user 'user' not found. Run UserSeeder first.");
+                logger.LogWarning("Test user 'user@test.com' not found. Run UserSeeder first.");
                 return;
             }
 

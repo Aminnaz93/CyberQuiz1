@@ -15,23 +15,23 @@ namespace CyberQuiz.DAL.Data
             var logger = loggerFactory.CreateLogger("UserSeeder");
 
             // Kontrollera om användaren redan finns
-            var existingUser = await userManager.FindByNameAsync("user");
+            var existingUser = await userManager.FindByEmailAsync("user@test.com");
             if (existingUser != null)
             {
-                logger.LogInformation("Test user 'user' already exists with ID: {UserId}", existingUser.Id);
+                logger.LogInformation("Test user 'user@test.com' already exists with ID: {UserId}", existingUser.Id);
                 return;
             }
 
             // Skapa testanvändare
             var testUser = new ApplicationUser
             {
-                UserName = "user",
+                UserName = "user@test.com",
                 Email = "user@test.com",
                 EmailConfirmed = true,
                 DisplayName = "Test User",
                 IsActive = true
             };
-            // sparar user i AspNetUsers-tabellen
+            // sparar user i AspNetUsers-tabellen — UserManager sätter NormalizedEmail automatiskt
             var result = await userManager.CreateAsync(testUser, "Password1234!");
 
             if (result.Succeeded)
