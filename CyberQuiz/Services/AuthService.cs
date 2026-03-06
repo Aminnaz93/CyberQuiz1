@@ -8,6 +8,7 @@ namespace CyberQuiz.Services
     public class AuthService
     {
         private readonly HttpClient _httpClient;
+        private JwtAuthenticationStateProvider? _authStateProvider;
 
         // Token sparas här i minnet medan appen körs
         private string? _token;
@@ -21,6 +22,11 @@ namespace CyberQuiz.Services
         public AuthService(HttpClient httpClient)
         {
             _httpClient = httpClient;
+        }
+
+        public void SetAuthenticationStateProvider(JwtAuthenticationStateProvider authStateProvider)
+        {
+            _authStateProvider = authStateProvider;
         }
 
         // Anropas från Login.razor
@@ -41,12 +47,13 @@ namespace CyberQuiz.Services
 
             // Spara token och sätt den på alla framtida anrop
             SetToken(result.Token);
+            _authStateProvider?.NotifyAuthenticationStateChanged();
             return true;
         }
 
         // Anropas från Register.razor
         // Skickar email + lösenord till API och sparar token om det lyckas
-        public async Task<bool> RegisterAsync(string email, string password, string confirmPassword)
+        public async Task<(bool Success, string? ErrorMessage)> RegisterAsync(string email, string password, string confirmPassword)
         {
             var dto = new RegisterDto
             {
@@ -58,16 +65,28 @@ namespace CyberQuiz.Services
             var response = await _httpClient.PostAsJsonAsync("api/auth/register", dto);
 
             if (!response.IsSuccessStatusCode)
-                return false;
+            {
+                // Försök läsa felmeddelande från API:et
+                try
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    return (false, errorContent);
+                }
+                catch
+                {
+                    return (false, "Något gick fel vid registrering.");
+                }
+            }
 
             // Läs token från API-svaret
             var result = await response.Content.ReadFromJsonAsync<TokenResponse>();
             if (result?.Token == null)
-                return false;
+                return (false, "Ingen token mottogs från servern.");
 
             // Spara token och sätt den på alla framtida anrop
             SetToken(result.Token);
-            return true;
+            _authStateProvider?.NotifyAuthenticationStateChanged();
+            return (true, null);
         }
 
         // Anropas när användaren loggar ut
@@ -78,6 +97,8 @@ namespace CyberQuiz.Services
 
             // Ta bort token från HttpClient
             _httpClient.DefaultRequestHeaders.Authorization = null;
+
+            _authStateProvider?.NotifyAuthenticationStateChanged();
         }
 
         // Sätter token på HttpClient så den skickas med automatiskt

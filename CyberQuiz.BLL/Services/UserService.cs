@@ -12,42 +12,54 @@ namespace CyberQuiz.BLL.Services
     public class UserService : IUserService 
     {
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IEmailSender<ApplicationUser> _emailSender; //Kommer vi använda IEmailSender???
+        private readonly IEmailSender<ApplicationUser> _emailSender;
 
         public UserService(
             UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
             IEmailSender<ApplicationUser> emailSender)
         {
             _userManager = userManager;
-            _signInManager = signInManager;
             _emailSender = emailSender;
         }
 
 
-        //Home & Login -->
+        //Home & Login --> 
         public async Task<SignInResult> PasswordSignInAsync(string email, string password, bool isPersistent, bool lockoutOnFailure)
         {
-            // SignInManager.PasswordSignInAsync kräver UserName, inte email.
-            // Slå upp användaren via email och använd deras UserName för inloggning.
+            // JWT API: Verifierar lösenord med UserManager istället för SignInManager (som kräver cookie auth)
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null)
                 return SignInResult.Failed;
 
-            // API använder JWT, inte cookies — SignInManager kan inte användas direkt.
-            // Validera lösenordet med UserManager istället.
-            var passwordValid = await _userManager.CheckPasswordAsync(user, password);
-            if (!passwordValid)
+            // Kontrollera om användaren är låst (om lockoutOnFailure är aktiverat)
+            if (lockoutOnFailure && await _userManager.IsLockedOutAsync(user))
+                return SignInResult.LockedOut;
+
+            // Verifiera lösenordet
+            var passwordCorrect = await _userManager.CheckPasswordAsync(user, password);
+            if (!passwordCorrect)
+            {
+                // Om lockoutOnFailure är aktiverat, registrera misslyckad inloggning
+                if (lockoutOnFailure)
+                    await _userManager.AccessFailedAsync(user);
                 return SignInResult.Failed;
+            }
+
+            // Återställ misslyckade inloggningsförsök vid lyckad inloggning
+            if (lockoutOnFailure)
+                await _userManager.ResetAccessFailedCountAsync(user);
 
             return SignInResult.Success;
         }
 
         //Login.razor -- med passkey (WebAuthn-credential i JSON-format) ??? - metoden tagen från Login.razor
+        // JWT API: Passkey-autentisering stöds inte i denna JWT API-implementation
         public async Task<SignInResult> PasskeySignInAsync(string credentialJson)
         {
-            return await _signInManager.PasskeySignInAsync(credentialJson);
+            // TODO: Implementera passkey-autentisering om det behövs
+            // För JWT API krävs en annan approach än SignInManager
+            await Task.CompletedTask;
+            throw new NotImplementedException("Passkey-autentisering är inte implementerat för JWT API.");
         }
 
 
@@ -85,11 +97,14 @@ namespace CyberQuiz.BLL.Services
         }
 
         //Register.razor -->
-        // Loggar in en nyregistrerad användare direkt utan lösenord.
+        // JWT API: Ingen cookie-inloggning behövs - JWT-token genereras istället i controllern
         public async Task SignInAfterRegisterAsync(string email, bool isPersistent)
         {
+            // Validera att användaren finns
             var user = await GetUserByEmailOrThrowAsync(email);
-            await _signInManager.SignInAsync(user, isPersistent);
+            // JWT-autentisering kräver ingen SignInManager - token skapas i API-controllern
+            // Denna metod behålls för kompatibilitet med interface
+            await Task.CompletedTask;
         }
 
         // Returnerar om e-postbekräftelse krävs för att logga in.
@@ -128,11 +143,14 @@ namespace CyberQuiz.BLL.Services
         }
 
         //ChangePassword.razor -->
-        // Uppdaterar användarens sign-in-cookie efter lösenordsbytet
+        // JWT API: Ingen cookie-uppdatering behövs - JWT-token förblir giltig tills den går ut
         public async Task RefreshSignInAsync(string userId)
         {
+            // Validera att användaren finns
             var user = await GetUserByIdOrThrowAsync(userId);
-            await _signInManager.RefreshSignInAsync(user);
+            // JWT-autentisering kräver ingen cookie-refresh - token valideras via signatur
+            // Denna metod behålls för kompatibilitet med interface
+            await Task.CompletedTask;
         }
         
         //Email.razor

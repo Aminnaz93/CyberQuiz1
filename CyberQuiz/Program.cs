@@ -1,6 +1,7 @@
 using CyberQuiz.Components;
 using CyberQuiz.Services;
 using CyberQuiz.UI.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 
 //using CyberQuiz.Components;
 //using CyberQuiz.Components.Account;
@@ -20,14 +21,36 @@ builder.Services.AddRazorComponents()
 
 //HTTP resurs som pekar på API.
 // Singleton för att AuthService (Singleton) ska kunna använda den
-builder.Services.AddSingleton(sp => new HttpClient
+// Alla sidor som injekterar HttpClient får samma instans som AuthService använder
+builder.Services.AddSingleton(sp => 
 {
-    BaseAddress = new Uri("https://localhost:7088/")
+    var httpClient = new HttpClient
+    {
+        BaseAddress = new Uri("https://localhost:7088/")
+    };
+    return httpClient;
 });
 
 //Authservice . minnet som håller koll på token och userID
 // Singleton = samma instans för hela appens livstid, token förloras inte vid navigering
-builder.Services.AddSingleton<AuthService>();
+builder.Services.AddSingleton<AuthService>(sp =>
+{
+    var httpClient = sp.GetRequiredService<HttpClient>();
+    return new AuthService(httpClient);
+});
+
+// Lägg till authentication och authorization services
+builder.Services.AddAuthentication("CustomScheme")
+    .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, CustomAuthenticationHandler>("CustomScheme", options => { });
+builder.Services.AddAuthorization();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddSingleton<AuthenticationStateProvider>(sp =>
+{
+    var authService = sp.GetRequiredService<AuthService>();
+    var provider = new JwtAuthenticationStateProvider(authService);
+    authService.SetAuthenticationStateProvider(provider);
+    return provider;
+});
 
 
 
@@ -62,6 +85,9 @@ else
 
 //app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseAntiforgery();
 

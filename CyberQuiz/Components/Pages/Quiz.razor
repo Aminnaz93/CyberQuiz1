@@ -167,6 +167,9 @@
     [Parameter]
     public int SubCategoryId { get; set; }
 
+    [SupplyParameterFromQuery(Name = "categoryId")]
+    public int? CategoryId { get; set; }
+
     private List<QuestionDto>? questions = null;
     private Dictionary<int, AnswerResultDto> results = new();
 
@@ -185,6 +188,18 @@
         if (userId == null) return;
 
         questions = await Http.GetFromJsonAsync<List<QuestionDto>>($"api/quiz/{SubCategoryId}");
+
+        if (questions != null)
+        {
+            //blanda svarsalternativen så inte rätt är första valet varje gång och uppdatera listan
+            var random = new Random();
+            foreach (var question in questions)
+            {
+                var shuffled = question.AnswerOptions.OrderBy(x => random.Next()).ToList();
+                question.AnswerOptions.Clear();
+                question.AnswerOptions.AddRange(shuffled);
+            }
+        }
     }
 
     private async Task SubmitAnswer(int questionId, int selectedOptionId)
@@ -228,6 +243,14 @@
 
     private void GoBack()
     {
-        NavigationManager.NavigateTo($"/subcategories/{SubCategoryId}");
+        //Koll att kategorin finns om inte skickas man till Category-sidan
+        if (CategoryId.HasValue)
+        {
+            NavigationManager.NavigateTo($"/subcategories/{CategoryId.Value}");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/categories");
+        }
     }
 }

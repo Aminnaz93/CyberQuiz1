@@ -66,17 +66,20 @@
         }
 
         // Skickar email + lösenord till AuthService
-        // AuthService skickar det vidare till API
-        var success = await AuthService.RegisterAsync(email, password, confirmPassword);
+        // AuthService skickar det vidare till API och tar emot eventuellt felmeddelande
+        var (success, error) = await AuthService.RegisterAsync(email, password, confirmPassword);
 
         if (success)
         {
-            // Registrering lyckades — gå till kategorisidan
+            // Registrering lyckades — logga ut användaren och gå till loginsidan
             registrationSucceded = true;
+            AuthService.Logout();
+            NavigationManager.NavigateTo("/login");
         }
         else
         {
-            errorMessage = "Något gick fel. Kontrollera att lösenordet är minst 6 tecken.";
+            //Visa ev felmeddelande eller default "Något gick..."
+            errorMessage = error ?? "Något gick fel. Kontrollera att lösenordet är minst 6 tecken.";
         }
     }
 }
