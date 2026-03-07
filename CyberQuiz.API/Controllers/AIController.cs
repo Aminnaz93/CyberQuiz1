@@ -11,27 +11,26 @@ namespace CyberQuiz.API.Controllers
     public class AIController : ControllerBase
     {
         private readonly IAIService _aiService;
+        //Hantera chatten
+        private readonly IAIService2 _aiService2;
         private readonly ILogger<AIController> _logger;
 
-        public AIController(IAIService aiService, ILogger<AIController> logger)
+        //IAIService2 tillagd så controllern kan använda chat - tjänsten
+        public AIController(IAIService aiService, IAIService2 aiService2, ILogger<AIController> logger)
         {
             _aiService = aiService;
+            _aiService2 = aiService2;
             _logger = logger;
         }
 
-        // Hämta AI:ns studieråd baserat på quiz-resultaten
         [HttpGet("recommendations")]
-        // [Authorize]  // TEMPORÄRT AVAKTIVERAD FÖR TESTNING
         public async Task<ActionResult<AIRecommendationResponseDto>> GetRecommendations(
             [FromQuery] int? subCategoryId = null,
-            [FromQuery] string? testUserId = null)  // TEMPORÄR TEST-PARAMETER
+            [FromQuery] string? testUserId = null)
         {
-            // TEMPORÄR KOD: Använd testUserId om angiven, annars hämta från claims
             var userId = testUserId ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
-            {
-                return BadRequest(new { message = "Ange testUserId parameter, t.ex. ?testUserId=din-user-id" });
-            }
+                return BadRequest(new { message = "Ange testUserId parameter" });
 
             try
             {
@@ -45,20 +44,39 @@ namespace CyberQuiz.API.Controllers
             }
         }
 
-        // Testa Ollama-anslutningen
+        // NYTT: tar emot meddelande från Coach.razor och skickar till AIService2
+        // AIChatRequestDto innehåller UserId + Message
+        // AIChatResponseDto innehåller AI:ns svar tillbaka
+        [HttpPost("chat")]
+        public async Task<IActionResult> Chat([FromBody] AIChatRequestDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.UserId))
+                return BadRequest(new { message = "userId krävs." });
+
+            if (string.IsNullOrWhiteSpace(request.Message))
+                return BadRequest(new { message = "Meddelandet får inte vara tomt." });
+
+            try
+            {
+                var response = await _aiService2.AskAsync(request.UserId, request.Message);
+                return Ok(new AIChatResponseDto { Message = response });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get AI chat response for user {UserId}", request.UserId);
+                return StatusCode(500, new { message = "Kunde inte få svar från AI. Kontrollera att Ollama körs." });
+            }
+        }
+
         [HttpGet("health")]
         public async Task<IActionResult> HealthCheck()
         {
             var isHealthy = await _aiService.HealthCheckAsync();
-            
+
             if (isHealthy)
-            {
                 return Ok(new { status = "healthy", message = "Ollama is running" });
-            }
             else
-            {
                 return StatusCode(503, new { status = "unhealthy", message = "Cannot connect to Ollama" });
-            }
         }
     }
 }
