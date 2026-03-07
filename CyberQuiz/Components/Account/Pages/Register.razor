@@ -1,4 +1,4 @@
-﻿@page "/register"
+﻿@* @page "/register"
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 @inject CyberQuiz.Services.AuthService AuthService
@@ -79,6 +79,181 @@
         else
         {
             //Visa ev felmeddelande eller default "Något gick..."
+            errorMessage = error ?? "Något gick fel. Kontrollera att lösenordet är minst 6 tecken.";
+        }
+    }
+}
+ *@
+
+
+
+@page "/register"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+@inject CyberQuiz.Services.AuthService AuthService
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Registrera dig</PageTitle>
+
+<div class="register-container">
+    <div class="register-card">
+        <div class="shield">🛡️</div>
+        <h1>Registrera dig</h1>
+        <p>Skapa ett konto för att börja quizza!</p>
+
+        @if (errorMessage != null)
+        {
+            <div class="error-message">@errorMessage</div>
+        }
+
+        <div class="input-group">
+            <input type="email" class="form-input" placeholder="E-postadress" @bind="email" />
+        </div>
+
+        <div class="input-group">
+            <input type="password" class="form-input" placeholder="Lösenord" @bind="password" />
+        </div>
+
+        <div class="input-group">
+            <input type="password" class="form-input" placeholder="Bekräfta lösenord" @bind="confirmPassword" />
+        </div>
+
+        <button class="btn-register" @onclick="RegisterUser">Registrera</button>
+
+        <p class="login-link">Har du redan ett konto? <a href="/login">Logga in här</a></p>
+    </div>
+</div>
+
+<style>
+    .register-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f2f5;
+    }
+
+    .register-card {
+        background: white;
+        border-radius: 16px;
+        padding: 3rem 2.5rem;
+        text-align: center;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        max-width: 400px;
+        width: 100%;
+    }
+
+    .shield {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .register-card h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0 0 0.75rem 0;
+    }
+
+    .register-card p {
+        color: #666;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .input-group {
+        margin-bottom: 0.75rem;
+        text-align: left;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+        outline: none;
+    }
+
+        .form-input:focus {
+            border-color: #4f46e5;
+        }
+
+    .btn-register {
+        display: block;
+        width: 100%;
+        padding: 0.85rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        margin-top: 0.75rem;
+        transition: opacity 0.2s;
+        background: #4f46e5;
+        color: white;
+    }
+
+        .btn-register:hover {
+            opacity: 0.85;
+        }
+
+    .error-message {
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .login-link {
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+        .login-link a {
+            color: #4f46e5;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+            .login-link a:hover {
+                text-decoration: underline;
+            }
+</style>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string confirmPassword = "";
+    private string? errorMessage;
+    private bool registrationSucceded = false;
+
+    private async Task RegisterUser()
+    {
+        errorMessage = null;
+
+        if (password != confirmPassword)
+        {
+            errorMessage = "Lösenorden matchar inte.";
+            return;
+        }
+
+        var (success, error) = await AuthService.RegisterAsync(email, password, confirmPassword);
+
+        if (success)
+        {
+            registrationSucceded = true;
+            AuthService.Logout();
+            NavigationManager.NavigateTo("/login");
+        }
+        else
+        {
             errorMessage = error ?? "Något gick fel. Kontrollera att lösenordet är minst 6 tecken.";
         }
     }
