@@ -646,10 +646,10 @@
 
         try
         {
-            var response = await Http.PostAsJsonAsync("api/ai/chat", new
+            var response = await Http.PostAsJsonAsync("api/ai/chat", new AIChatRequestDto
             {
-                userId = userId,
-                message = userText
+                UserId = userId!,
+                Message = userText
             });
 
             if (response.IsSuccessStatusCode)
