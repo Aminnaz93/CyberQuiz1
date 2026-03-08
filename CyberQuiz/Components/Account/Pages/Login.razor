@@ -1,4 +1,4 @@
-﻿@page "/login"
+﻿@* @page "/login"
 @rendermode @(new InteractiveServerRenderMode(prerender: false))
 @inject NavigationManager NavigationManager
 @inject CyberQuiz.Services.AuthService AuthService
@@ -35,6 +35,191 @@
 
     </div>
 </div>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string? errorMessage;
+    private bool isReady = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isReady = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoginUser()
+    {
+        errorMessage = null;
+
+        bool success;
+        try
+        {
+            success = await AuthService.LoginAsync(email, password);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Fel: {ex.Message}";
+            return;
+        }
+
+        if (success)
+        {
+            NavigationManager.NavigateTo("/categories", forceLoad: true);
+        }
+        else
+        {
+            errorMessage = "Fel e-post eller lösenord.";
+        }
+    }
+} *@
+
+
+
+@page "/login"
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@inject NavigationManager NavigationManager
+@inject CyberQuiz.Services.AuthService AuthService
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Logga in</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="shield">🛡️</div>
+        <h1>CyberQuiz</h1>
+        <p>Logga in för att fortsätta</p>
+
+        @if (errorMessage != null)
+        {
+            <div class="error-message">@errorMessage</div>
+        }
+
+        <div class="input-group">
+            <input type="email" class="form-input" placeholder="E-postadress"
+                   @bind="email" @bind:event="oninput" />
+        </div>
+
+        <div class="input-group">
+            <input type="password" class="form-input" placeholder="Lösenord"
+                   @bind="password" @bind:event="oninput" />
+        </div>
+
+        <button class="btn-login" @onclick="LoginUser" disabled="@(!isReady)">Logga in</button>
+
+        <p class="register-link">Inget konto? <a href="/register">Registrera dig här</a></p>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f2f5;
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 16px;
+        padding: 3rem 2.5rem;
+        text-align: center;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        max-width: 400px;
+        width: 100%;
+    }
+
+    .shield {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .login-card h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0 0 0.75rem 0;
+    }
+
+    .login-card p {
+        color: #666;
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .input-group {
+        margin-bottom: 0.75rem;
+        text-align: left;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+        outline: none;
+    }
+
+        .form-input:focus {
+            border-color: #4f46e5;
+        }
+
+    .btn-login {
+        display: block;
+        width: 100%;
+        padding: 0.85rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        margin-top: 0.75rem;
+        transition: opacity 0.2s;
+        background: #4f46e5;
+        color: white;
+    }
+
+        .btn-login:hover:not(:disabled) {
+            opacity: 0.85;
+        }
+
+        .btn-login:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+    .error-message {
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .register-link {
+        margin-top: 1.5rem;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+        .register-link a {
+            color: #4f46e5;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+            .register-link a:hover {
+                text-decoration: underline;
+            }
+</style>
 
 @code {
     private string email = "";

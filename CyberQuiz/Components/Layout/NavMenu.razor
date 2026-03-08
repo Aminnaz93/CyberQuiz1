@@ -1,4 +1,4 @@
-﻿@implements IDisposable
+﻿@* @implements IDisposable
 @inject NavigationManager NavigationManager
 @inject CyberQuiz.Services.AuthService AuthService
 
@@ -80,6 +80,62 @@
         AuthService.Logout();
 
         // Navigera till startsidan
+        NavigationManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}
+ *@
+
+
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@inject CyberQuiz.Services.AuthService AuthService
+
+<nav class="topbar">
+    <a class="brand-link" href="">
+        <span class="brand-name">CyberQuiz</span>
+    </a>
+
+    <div class="topbar-links">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+
+        @if (AuthService.IsLoggedIn)
+        {
+            <NavLink class="nav-link" href="categories">Kategorier</NavLink>
+            <NavLink class="nav-link" href="coach">AI Coach</NavLink>
+            <NavLink class="nav-link" href="profile">Profil</NavLink>
+            <button class="nav-link nav-btn-logout" @onclick="Logout">Logga ut</button>
+        }
+        else
+        {
+            <NavLink class="nav-link" href="login">Logga in</NavLink>
+            <NavLink class="nav-link nav-link-register" href="register">Registrera</NavLink>
+        }
+    </div>
+</nav>
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    private void Logout()
+    {
+        AuthService.Logout();
         NavigationManager.NavigateTo("/");
     }
 

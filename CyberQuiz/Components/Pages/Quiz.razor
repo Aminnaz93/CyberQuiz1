@@ -58,6 +58,7 @@
         {
             <div class="result-summary">
                 <p>Du fick @results.Values.Count(r => r.IsCorrect) av @questions.Count rätt!</p>
+                <button class="coach-btn" @onclick="GoToCoach">Prata med AI Coach om detta quiz</button>
                 <button class="back-btn" @onclick="GoBack">← Tillbaka till subkategorier</button>
             </div>
         }
@@ -148,6 +149,25 @@
             margin-bottom: 1rem;
         }
 
+    .coach-btn {
+        display: block;
+        width: 100%;
+        padding: 0.75rem 1.5rem;
+        background: #4f46e5;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        transition: opacity 0.2s;
+    }
+
+        .coach-btn:hover {
+            opacity: 0.85;
+        }
+
     .back-btn {
         padding: 0.75rem 1.5rem;
         background: #7c3aed;
@@ -176,7 +196,6 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
-    // Sparar userId så vi kan använda den i SubmitAnswer också
     private string? userId;
 
     protected override async Task OnInitializedAsync()
@@ -191,7 +210,6 @@
 
         if (questions != null)
         {
-            //blanda svarsalternativen så inte rätt är första valet varje gång och uppdatera listan
             var random = new Random();
             foreach (var question in questions)
             {
@@ -208,8 +226,7 @@
         {
             QuestionId = questionId,
             SelectedAnswerOptionId = selectedOptionId,
-            // skickar userId nu
-            UserId = userId ?? ""  
+            UserId = userId ?? ""
         });
 
         if (result.IsSuccessStatusCode)
@@ -241,9 +258,13 @@
         return results.ContainsKey(questionId);
     }
 
+    private void GoToCoach()
+    {
+        NavigationManager.NavigateTo($"/coach?subCategoryId={SubCategoryId}");
+    }
+
     private void GoBack()
     {
-        //Koll att kategorin finns om inte skickas man till Category-sidan
         if (CategoryId.HasValue)
         {
             NavigationManager.NavigateTo($"/subcategories/{CategoryId.Value}");
