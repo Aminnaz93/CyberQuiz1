@@ -40,6 +40,7 @@ builder.Services.AddScoped<IQuizService, QuizService>();
 builder.Services.AddScoped<IUserResultService, UserResultService>();
 // AI-service för studieråd
 builder.Services.AddScoped<IAIService, AIService>();
+builder.Services.AddScoped<IAIService2, AIService2>();
 
 // Registrera repositories
 builder.Services.AddScoped<CyberQuiz.DAL.Repositories.IUserResultRepository, CyberQuiz.DAL.Repositories.UserResultRepository>();

@@ -22,11 +22,12 @@ builder.Services.AddRazorComponents()
 //HTTP resurs som pekar på API.
 // Singleton för att AuthService (Singleton) ska kunna använda den
 // Alla sidor som injekterar HttpClient får samma instans som AuthService använder
-builder.Services.AddSingleton(sp => 
+builder.Services.AddSingleton(sp =>
 {
     var httpClient = new HttpClient
     {
-        BaseAddress = new Uri("https://localhost:7088/")
+        BaseAddress = new Uri("https://localhost:7088/"),
+        Timeout = TimeSpan.FromMinutes(5)
     };
     return httpClient;
 });

@@ -62,7 +62,7 @@ namespace CyberQuiz.BLL.Services
             try
             {
                 var response = await _httpClient.PostAsJsonAsync(
-                    $"{_ollamaBaseUrl}/api/chat",
+                    "/api/chat",
                     request);
 
                 response.EnsureSuccessStatusCode();
