@@ -8,40 +8,117 @@
 <PageTitle>Kategorier</PageTitle>
 
 <div class="categories-container">
-    <h2>Välj en kategori</h2>
+    <div class="categories-card">
+        <div class="shield">📚</div>
+        <h1>Kategorier</h1>
+        <p>Välj ett område att testa dina kunskaper inom</p>
 
-    @if (categories == null)
-    {
-        <p>Laddar kategorier...</p>
-    }
-    else
-    {
-        @foreach (var category in categories)
+        @if (categories == null)
         {
-            <div class="category-card"
-                 @onclick="() => OnCategoryClick(category)">
-                <h3>@category.Name</h3>
-                <p>@category.SubCategories.Count subkategorier</p>
+            <p class="muted-text">Laddar kategorier...</p>
+        }
+        else
+        {
+            <div class="category-list">
+                @foreach (var category in categories)
+                {
+                    <div class="category-card" @onclick="() => OnCategoryClick(category)">
+                        <div class="category-name">@category.Name</div>
+                        <div class="category-sub">@category.SubCategories.Count subkategorier</div>
+                    </div>
+                }
             </div>
         }
-    }
+    </div>
 </div>
 
-@* samma style som innan *@
+<style>
+    .categories-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        background: #f0f2f5;
+        padding: 2rem 1rem;
+    }
+
+    .categories-card {
+        background: white;
+        border-radius: 16px;
+        padding: 3rem 2.5rem;
+        text-align: center;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        max-width: 480px;
+        width: 100%;
+    }
+
+    .shield {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .categories-card h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0 0 0.75rem 0;
+    }
+
+    .categories-card > p {
+        color: #666;
+        font-size: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .category-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .category-card {
+        padding: 1rem 1.2rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: left;
+        transition: border-color 0.2s, background 0.2s;
+    }
+
+        .category-card:hover {
+            border-color: #4f46e5;
+            background: #f5f4ff;
+        }
+
+    .category-name {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #1a1a2e;
+        margin-bottom: 0.25rem;
+    }
+
+    .category-sub {
+        font-size: 0.8rem;
+        color: #888;
+    }
+
+    .muted-text {
+        color: #aaa;
+        font-size: 0.9rem;
+    }
+</style>
 
 @code {
     private List<CategoryDto>? categories = null;
 
     protected override async Task OnInitializedAsync()
     {
-        // Omdirigera till login om användaren inte är inloggad
         if (!AuthService.IsLoggedIn)
         {
             NavigationManager.NavigateTo("/login");
             return;
         }
 
-        // Skickar userId till API (HttpClient har redan Bearer-token satt av AuthService)
         categories = await Http.GetFromJsonAsync<List<CategoryDto>>(
             $"api/categories?userId={AuthService.UserId}");
     }
