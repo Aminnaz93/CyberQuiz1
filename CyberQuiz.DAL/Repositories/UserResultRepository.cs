@@ -21,7 +21,8 @@ namespace CyberQuiz.DAL.Repositories
         {
             return await _context.UserResults
                 .Include(ur => ur.Question)
-                    .ThenInclude(q => q.SubCategory)  // Lägg till SubCategory!
+                    .ThenInclude(q => q.SubCategory)
+                        .ThenInclude(sc => sc.Category)
                 .Include(ur => ur.AnswerOption)
                 .Include(ur => ur.Question.AnswerOptions)  // För att få rätt svar
                 .Where(ur => ur.UserId == userId)

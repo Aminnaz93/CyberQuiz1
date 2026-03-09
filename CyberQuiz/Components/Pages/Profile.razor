@@ -10,29 +10,24 @@
 <div class="profile-container">
     <h2>Min Progression</h2>
 
-    @if (progressions == null)
+    @if (categories == null)
     {
         <p>Laddar progression...</p>
     }
-    else if (!progressions.Any())
-    {
-        <p>Du har inte svarat på några frågor ännu.</p>
-    }
     else
     {
-        @foreach (var p in progressions)
+        @foreach (var category in categories)
         {
-            <div class="progression-card @(p.IsPassed ? "passed" : "not-passed")">
-                <p>Subkategori: @p.SubCategoryId</p>
-                @if (p.IsPassed)
-                {
-                    <p>Klarad</p>
-                }
-                else
-                {
-                    <p>Ej klarad</p>
-                }
-            </div>
+            <h3 class="category-heading">@category.Name</h3>
+            @foreach (var sc in category.SubCategories)
+            {
+                var cssClass = GetStatusClass(sc.Id, sc.IsUnlocked);
+                var label = GetStatusLabel(sc.Id, sc.IsUnlocked);
+                <div class="progression-card @cssClass">
+                    <span class="subcategory-name">@sc.Name</span>
+                    <span class="status-label">@label</span>
+                </div>
+            }
         }
     }
 
@@ -56,11 +51,21 @@
             margin-bottom: 1.5rem;
         }
 
+    .category-heading {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #444;
+        margin: 1.5rem 0 0.5rem 0;
+    }
+
     .progression-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         border: 2px dashed #ccc;
         border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+        margin-bottom: 0.5rem;
     }
 
         .progression-card.passed {
@@ -73,9 +78,20 @@
             background: #fee2e2;
         }
 
-        .progression-card p {
-            margin: 0 0 0.5rem 0;
+        .progression-card.locked {
+            border-color: #ccc;
+            background: #f5f5f5;
+            color: #999;
         }
+
+    .subcategory-name {
+        font-size: 0.95rem;
+    }
+
+    .status-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
 
     .manage-links {
         margin-top: 2rem;
@@ -123,22 +139,47 @@
 </style>
 
 @code {
-    private List<ProgressionDto>? progressions = null;
+    private List<CategoryDto>? categories = null;
+    // SubCategoryId → IsPassed, bara för subkategorier användaren besökt
+    private Dictionary<int, bool> progressionMap = new();
 
     protected override async Task OnInitializedAsync()
     {
-        // Hämta userId från AuthService istället för AuthenticationState
         var userId = AuthService.UserId;
 
-        // Om användaren inte är inloggad — gå till login
         if (userId == null)
         {
             NavigationManager.NavigateTo("/login");
             return;
         }
 
-        progressions = await Http.GetFromJsonAsync<List<ProgressionDto>>(
+        // Kör båda anropen parallellt
+        var progressionTask = Http.GetFromJsonAsync<List<ProgressionDto>>(
             $"api/user/progression?userId={userId}");
+        var categoriesTask = Http.GetFromJsonAsync<List<CategoryDto>>(
+            $"api/categories?userId={userId}");
+
+        await Task.WhenAll(progressionTask, categoriesTask);
+
+        categories = categoriesTask.Result;
+
+        // Bygg uppslagstabell: subCategoryId → IsPassed
+        progressionMap = (progressionTask.Result ?? [])
+            .ToDictionary(p => p.SubCategoryId, p => p.IsPassed);
+    }
+
+    private string GetStatusClass(int subCategoryId, bool isUnlocked)
+    {
+        if (!isUnlocked) return "locked";
+        if (progressionMap.TryGetValue(subCategoryId, out var isPassed) && isPassed) return "passed";
+        return "not-passed";
+    }
+
+    private string GetStatusLabel(int subCategoryId, bool isUnlocked)
+    {
+        if (!isUnlocked) return "🔒 Låst";
+        if (progressionMap.TryGetValue(subCategoryId, out var isPassed) && isPassed) return "Klarad";
+        return "Ej klarad";
     }
 
     private void GoBack()
