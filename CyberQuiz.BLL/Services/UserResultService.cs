@@ -69,8 +69,12 @@ namespace CyberQuiz.BLL.Services
                 {
                     UserId = userId,
                     SubCategoryId = group.Key,
+                    SubCategoryName = group.First().Question.SubCategory.Name,
+                    CategoryName = group.First().Question.SubCategory.Category.Name,
                     IsPassed = (double)group.Count(r => r.IsCorrect) / group.Count() >= QuizConstants.MinPassScore
                 })
+                .OrderBy(p => p.CategoryName)
+                .ThenBy(p => p.SubCategoryId)
                 .ToList();
 
             return progression;
