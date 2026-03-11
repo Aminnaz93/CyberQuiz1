@@ -106,10 +106,9 @@
     </a>
 
     <div class="topbar-right">
-        <a class="nav-btn" href="/">Home</a>
-
         @if (AuthService.IsLoggedIn)
         {
+            @* <a class="nav-btn" href="/">Home</a> *@
             <a class="nav-btn" href="/categories">Kategorier</a>
             <a class="nav-btn" href="/coach">AI Coach</a>
             <a class="nav-btn" href="/profile">Profil</a>
@@ -117,6 +116,7 @@
         }
         else
         {
+            <a class="nav-btn" href="/">Home</a>
             <a class="nav-btn" href="/login">Logga in</a>
             <a class="nav-btn" href="/register">Registrera</a>
         }
@@ -177,9 +177,9 @@
             color: white;
         }
 
-        .btn-logout {
-            background: #dc2626;
-        }
+    .btn-logout {
+        background: #dc2626;
+    }
 
         .btn-logout:hover {
             background: #b91c1c;
@@ -215,3 +215,4 @@
         AuthService.OnAuthStateChanged -= OnAuthChanged;
     }
 }
+
