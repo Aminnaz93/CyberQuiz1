@@ -19,6 +19,10 @@ namespace CyberQuiz.Services
         // Sant om användaren är inloggad
         public bool IsLoggedIn => _token != null;
 
+        // Event som triggas när inloggningsstatus ändras
+        // NavMenu lyssnar på detta för att uppdatera sig
+        public event Action? OnAuthStateChanged;
+
         public AuthService(HttpClient httpClient)
         {
             _httpClient = httpClient;
@@ -48,6 +52,7 @@ namespace CyberQuiz.Services
             // Spara token och sätt den på alla framtida anrop
             SetToken(result.Token);
             _authStateProvider?.NotifyAuthenticationStateChanged();
+            OnAuthStateChanged?.Invoke();
             return true;
         }
 
@@ -86,6 +91,7 @@ namespace CyberQuiz.Services
             // Spara token och sätt den på alla framtida anrop
             SetToken(result.Token);
             _authStateProvider?.NotifyAuthenticationStateChanged();
+            OnAuthStateChanged?.Invoke();
             return (true, null);
         }
 
@@ -99,6 +105,7 @@ namespace CyberQuiz.Services
             _httpClient.DefaultRequestHeaders.Authorization = null;
 
             _authStateProvider?.NotifyAuthenticationStateChanged();
+            OnAuthStateChanged?.Invoke();
         }
 
         // Sätter token på HttpClient så den skickas med automatiskt

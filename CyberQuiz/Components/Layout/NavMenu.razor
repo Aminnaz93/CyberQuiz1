@@ -89,48 +89,111 @@
     }
 }
  *@
-
-
 @implements IDisposable
 @inject NavigationManager NavigationManager
 @inject CyberQuiz.Services.AuthService AuthService
 
 <nav class="topbar">
-    <a class="brand-link" href="">
-        <span class="brand-name">CyberQuiz</span>
+    <a class="brand-link" href="/">
+        🛡️ <span class="brand-name">CyberQuiz</span>
     </a>
 
-    <div class="topbar-links">
-        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+    <div class="topbar-right">
+        <a class="nav-btn" href="/">Home</a>
 
         @if (AuthService.IsLoggedIn)
         {
-            <NavLink class="nav-link" href="categories">Kategorier</NavLink>
-            <NavLink class="nav-link" href="coach">AI Coach</NavLink>
-            <NavLink class="nav-link" href="profile">Profil</NavLink>
-            <button class="nav-link nav-btn-logout" @onclick="Logout">Logga ut</button>
+            <a class="nav-btn" href="/categories">Kategorier</a>
+            <a class="nav-btn" href="/coach">AI Coach</a>
+            <a class="nav-btn" href="/profile">Profil</a>
+            <button class="nav-btn btn-logout" @onclick="Logout">Logga ut</button>
         }
         else
         {
-            <NavLink class="nav-link" href="login">Logga in</NavLink>
-            <NavLink class="nav-link nav-link-register" href="register">Registrera</NavLink>
+            <a class="nav-btn" href="/login">Logga in</a>
+            <a class="nav-btn" href="/register">Registrera</a>
         }
     </div>
 </nav>
 
-@code {
-    private string? currentUrl;
+<style>
+    .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2rem;
+        height: 60px;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
 
+    .brand-link {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+
+    .brand-name {
+        color: #4f46e5;
+    }
+
+    .topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .nav-btn {
+        display: inline-block;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-decoration: none;
+        background: #4f46e5;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s;
+        white-space: nowrap;
+    }
+
+        .nav-btn:hover {
+            background: #4338ca;
+            color: white;
+        }
+
+    .btn-logout {
+        background: #dc2626;
+    }
+
+        .btn-logout:hover {
+            background: #b91c1c;
+        }
+</style>
+
+@code {
     protected override void OnInitialized()
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         NavigationManager.LocationChanged += OnLocationChanged;
+        AuthService.OnAuthStateChanged += OnAuthChanged;
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
         StateHasChanged();
+    }
+
+    private void OnAuthChanged()
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private void Logout()
@@ -142,5 +205,6 @@
     public void Dispose()
     {
         NavigationManager.LocationChanged -= OnLocationChanged;
+        AuthService.OnAuthStateChanged -= OnAuthChanged;
     }
 }
