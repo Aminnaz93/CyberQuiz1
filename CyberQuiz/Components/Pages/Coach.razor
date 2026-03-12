@@ -12,7 +12,25 @@
 
         <div class="shield">🤖</div>
         <h1>AI Coach</h1>
-        <p>Personlig analys av dina quiz-resultat</p>
+        @if (SubCategoryId.HasValue)
+        {
+            @if (!string.IsNullOrEmpty(SubCategoryName))
+            {
+                <p>Personlig analys av dina quiz-resultat inom @SubCategoryName</p>
+            }
+            else if (recommendations?.AnalyzedCategories?.Count == 1)
+            {
+                <p>Personlig analys av ditt quiz-resultat inom @recommendations.AnalyzedCategories.First()</p>
+            }
+            else
+            {
+                <p>Personlig analys av ditt quiz-resultat</p>
+            }
+        }
+        else
+        {
+            <p>Personlig analys av alla dina quiz-resultat</p>
+        }
 
         <!-- ═══ ZON 1: STATS ═══ -->
         @if (recommendations != null)
@@ -26,10 +44,13 @@
                     <div class="stat-label">Rätt svar</div>
                     <div class="stat-value green">@recommendations.SuccessRate.ToString("F0")%</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Svagaste område</div>
-                    <div class="stat-value orange">@(recommendations.WeakestCategory ?? "–")</div>
-                </div>
+                @if (!SubCategoryId.HasValue)
+                {
+                    <div class="stat-card">
+                        <div class="stat-label">Svagaste område</div>
+                        <div class="stat-value orange">@(recommendations.WeakestCategory ?? "–")</div>
+                    </div>
+                }
             </div>
         }
 
@@ -39,7 +60,7 @@
         @if (isLoadingRecommendations)
         {
             <div class="loading-box">
-                <p>Analyserar dina resultat...</p>
+                <p>Analyserar dina resultat<span class="loading-dots"></span></p>
             </div>
         }
         else if (recommendationError != null)
@@ -259,6 +280,22 @@
         color: #888;
         margin-bottom: 1.5rem;
         font-size: 0.9rem;
+    }
+
+    /* Animerade prickar */
+    .loading-dots::after {
+        content: '';
+        display: inline-block;
+        width: 1.5em;  /* Fast bredd för att förhindra text-hopp */
+        text-align: left;
+        animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @@keyframes dots {
+        0%, 20% { content: '.'; }
+        40% { content: '..'; }
+        60% { content: '...'; }
+        80%, 100% { content: ''; }
     }
 
     /* ERROR */
@@ -588,6 +625,9 @@
     [SupplyParameterFromQuery(Name = "subCategoryId")]
     public int? SubCategoryId { get; set; }
 
+    [SupplyParameterFromQuery(Name = "subCategoryName")]
+    public string? SubCategoryName { get; set; }
+
     private AIRecommendationResponseDto? recommendations;
     private bool isLoadingRecommendations = true;
     private string? recommendationError;
@@ -610,10 +650,21 @@
         await LoadRecommendations();
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        // Körs varje gång SubCategoryId eller SubCategoryName ändras i URL:en
+        // Detta säkerställer att nya recommendations laddas vid navigering
+        if (userId != null)
+        {
+            await LoadRecommendations();
+        }
+    }
+
     private async Task LoadRecommendations()
     {
         isLoadingRecommendations = true;
         recommendationError = null;
+        recommendations = null;  //Rensa gamla recommendations
 
         try
         {

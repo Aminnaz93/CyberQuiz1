@@ -190,6 +190,9 @@
     [SupplyParameterFromQuery(Name = "categoryId")]
     public int? CategoryId { get; set; }
 
+    [SupplyParameterFromQuery(Name = "subCategoryName")]
+    public string? SubCategoryName { get; set; }
+
     private List<QuestionDto>? questions = null;
     private Dictionary<int, AnswerResultDto> results = new();
     private Guid _attemptId = Guid.NewGuid(); // unikt ID för denna quiz-omgång, genereras varje gång sidan laddas
@@ -262,7 +265,12 @@
 
     private void GoToCoach()
     {
-        NavigationManager.NavigateTo($"/coach?subCategoryId={SubCategoryId}");
+        var url = $"/coach?subCategoryId={SubCategoryId}";
+        if (!string.IsNullOrEmpty(SubCategoryName))
+        {
+            url += $"&subCategoryName={Uri.EscapeDataString(SubCategoryName)}";
+        }
+        NavigationManager.NavigateTo(url);
     }
 
     private void GoBack()
