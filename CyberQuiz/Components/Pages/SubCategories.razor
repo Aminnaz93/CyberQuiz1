@@ -108,7 +108,7 @@
         //CategoryId används för att tillbaka-knappen ska veta vilken kategori man ska återvända till
         if (sub.IsUnlocked)
         {
-            NavigationManager.NavigateTo($"/quiz/{sub.Id}?categoryId={CategoryId}");
+            NavigationManager.NavigateTo($"/quiz/{sub.Id}?categoryId={CategoryId}&subCategoryName={Uri.EscapeDataString(sub.Name)}");
         }
     }
 }

@@ -88,7 +88,10 @@ namespace CyberQuiz.BLL.Services
             _logger.LogInformation("Analyzed {Count} categories", analysis.Count);
 
             // 4. Bygg prompt för Ollama
-            var prompt = BuildPromptForOllama(analysis);
+            bool isSpecificCategory = subCategoryId.HasValue; //Om man kommer från en subcategory-sida
+            var prompt = BuildPromptForOllama(analysis, isSpecificCategory);
+
+            //var prompt = BuildPromptForOllama(analysis);
             _logger.LogInformation("Built prompt, length: {Length} characters", prompt.Length);
 
             // 5. Anropa Ollama
@@ -103,38 +106,52 @@ namespace CyberQuiz.BLL.Services
             return result;
         }
 
-        private string BuildPromptForOllama(List<CategoryAnalysis> analysis)
+        private string BuildPromptForOllama(List<CategoryAnalysis> analysis, bool isSpecificCategory)
         {
             //Det blev konstiga svar med svenska, så det fick bli engelska istället
             var sb = new StringBuilder();
-            sb.AppendLine("You are a cybersecurity expert. Analyze quiz results and provide study recommendations.");
-            sb.AppendLine();
-            sb.AppendLine("Quiz Results:");
 
-            foreach (var category in analysis)
+            if (isSpecificCategory && analysis.Count == 1)
             {
-                var successRate = (double)category.CorrectAnswers / category.TotalQuestions * 100;
-                sb.AppendLine($"- {category.SubCategoryName}: {category.CorrectAnswers}/{category.TotalQuestions} ({successRate:F0}%)");
+                // PROMPT A: Specifik subcategory
+                var category = analysis.First();
+                sb.AppendLine($"Analyze quiz on {category.SubCategoryName}: {category.CorrectAnswers}/{category.TotalQuestions}");
 
-                if (category.IncorrectQuestions.Count > 0 && category.IncorrectQuestions.Count <= 3)
+                if (category.IncorrectQuestions.Any())
                 {
-                    sb.AppendLine($"  Mistakes:");
-                    //analysera max 3 felaktiga svar, för att inte prompten ska bli för lång
-                    foreach (var q in category.IncorrectQuestions.Take(3))
+                    sb.AppendLine("Mistakes:");
+                    foreach (var q in category.IncorrectQuestions.Take(2))  // Max 2 istället för 5!
                     {
-                        sb.AppendLine($"  * {q.QuestionText}");
+                        sb.AppendLine($"- {q.QuestionText}");
                     }
                 }
+
+                sb.AppendLine($"Focus on {category.SubCategoryName}. Provide 2 specific resources.");
+            }
+            else
+            {
+                // PROMPT B: Övergripande analys
+                sb.AppendLine("You are a cybersecurity expert. Analyze the user's overall quiz performance.");
+                sb.AppendLine();
+                sb.AppendLine("Quiz Results across multiple topics:");
+
+                foreach (var category in analysis)
+                {
+                    var successRate = (double)category.CorrectAnswers / category.TotalQuestions * 100;
+                    sb.AppendLine($"- {category.SubCategoryName}: {category.CorrectAnswers}/{category.TotalQuestions} ({successRate:F0}%)");
+                }
+
+                sb.AppendLine();
+                //tydlig instruktion hur svaret ska vara formatterat
+                sb.AppendLine("Based on the results above, generate personalized study recommendations.");
+                sb.AppendLine();
+                sb.AppendLine("IMPORTANT: Analyze the ACTUAL results above, do NOT copy the example below!");
+                sb.AppendLine();
             }
 
-            sb.AppendLine();
-            //tydlig instruktion hur svaret ska vara formatterat
-            sb.AppendLine("Based on the results above, generate personalized study recommendations.");
-            sb.AppendLine();
-            sb.AppendLine("IMPORTANT: Analyze the ACTUAL results above, do NOT copy the example below!");
-            sb.AppendLine();
-            sb.AppendLine("Return your response in this EXACT JSON structure (note: recommendedResources is an ARRAY):");
-            sb.AppendLine(@"{
+            // JSON-struktur som gäller för BÅDA prompter
+                sb.AppendLine("Return your response in this EXACT JSON structure (note: recommendedResources is an ARRAY):");
+                sb.AppendLine(@"{
   ""summary"": ""<Write 2-3 sentences analyzing THIS USER's actual strengths and weaknesses>"",
   ""recommendations"": [
     {
@@ -152,18 +169,19 @@ namespace CyberQuiz.BLL.Services
     }
   ]
 }");
-            sb.AppendLine();
-            sb.AppendLine("CRITICAL INSTRUCTIONS:");
-            sb.AppendLine("1. recommendedResources MUST be an ARRAY with square brackets []");
-            sb.AppendLine("2. Focus on categories with LOWEST success rates from the results above");
-            sb.AppendLine("3. Mention SPECIFIC topics from the actual quiz results");
-            sb.AppendLine("4. Generate 2-3 recommendations for weak areas");
-            sb.AppendLine("5. Use real URLs to cybersecurity resources (OWASP, NIST, SANS, Cisco, etc.)");
-            sb.AppendLine("6. Return ONLY the JSON object, no markdown code blocks, no extra text");
-            sb.AppendLine("7. Each recommendation should have 1-2 resources in the array");
+                sb.AppendLine();
+                sb.AppendLine("CRITICAL INSTRUCTIONS:");
+                sb.AppendLine("1. recommendedResources MUST be an ARRAY with square brackets []");
+                sb.AppendLine("2. Focus on categories with LOWEST success rates from the results above");
+                sb.AppendLine("3. Mention SPECIFIC topics from the actual quiz results");
+                sb.AppendLine("4. Generate ONLY 2 recommendations (not 3!)");
+                sb.AppendLine("5. Use real URLs to cybersecurity resources (OWASP, NIST, SANS, Cisco, etc.)");
+                sb.AppendLine("6. Return ONLY the JSON object, no markdown code blocks, no extra text");
+                sb.AppendLine("7. Each recommendation should have 1-2 resources in the array");
+                sb.AppendLine("8. Keep descriptions brief (one sentence max)");
 
-            return sb.ToString();
-        }
+                return sb.ToString();
+            }
         //Ollama API anrop
         private async Task<string> CallOllamaAsync(string prompt)
         {
@@ -175,10 +193,10 @@ namespace CyberQuiz.BLL.Services
                 format = "json",
                 options = new
                 {
-                    temperature = 0.3,    // Lägre = mer deterministisk JSON Inte så utsvävande svar
-                    num_predict = 1200,   // Ökat för att hinna generera hela JSON-svaret
-                    top_k = 40,           // Begränsar vokabulär (snabbare)
-                    top_p = 0.9           // bortser från de minst sannolika orden
+                    temperature = 0.5,    // Ökat från 0.3 för snabbare beslut
+                    num_predict = 2000,   // Ökat från 1200 för att hinna med kompletta svar
+                    top_k = 30,           // Minskad från 40 för snabbare generering
+                    top_p = 0.85          // Minskad från 0.9 för fokuserat svar
                 }
             };
 
