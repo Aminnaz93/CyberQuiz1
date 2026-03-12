@@ -152,17 +152,26 @@ namespace CyberQuiz.BLL.Services
                 var bestScore = attemptsWithId
                     .Select(g => (double)g.Count(r => r.IsCorrect) / g.Count())
                     .Max();
-                return bestScore >= QuizConstants.MinPassScore;
+                if (bestScore >= QuizConstants.MinPassScore)
+                    return true;
             }
 
-            // Fallback för äldre data utan AttemptId: senaste svaret per fråga
-            var latestPerQuestion = userResults
-                .GroupBy(r => r.QuestionId)
-                .Select(g => g.OrderByDescending(r => r.AnsweredAt).First())
-                .ToList();
+            // Kolla även äldre data utan AttemptId (sparad innan AttemptId introducerades).
+            // Viktigt: detta måste köras även om det finns AttemptId-data, annars ignoreras
+            // gamla godkända försök när användaren misslyckas med ett nytt quiz.
+            var seededResults = userResults.Where(r => !r.AttemptId.HasValue).ToList();
+            if (seededResults.Any())
+            {
+                var latestPerQuestion = seededResults
+                    .GroupBy(r => r.QuestionId)
+                    .Select(g => g.OrderByDescending(r => r.AnsweredAt).First())
+                    .ToList();
 
-            var correctCount = latestPerQuestion.Count(r => r.IsCorrect);
-            return (double)correctCount / latestPerQuestion.Count >= QuizConstants.MinPassScore;
+                var correctCount = latestPerQuestion.Count(r => r.IsCorrect);
+                return (double)correctCount / latestPerQuestion.Count >= QuizConstants.MinPassScore;
+            }
+
+            return false;
         }
 
         // Samma logik som IsSubCategoryUnlockedAsync men arbetar på redan hämtad data för att slippa så många DB-anrop...
@@ -192,7 +201,7 @@ namespace CyberQuiz.BLL.Services
             if (!userResults.Any())
                 return false;
 
-            // Samma beräkning som i IsSubCategoryUnlockedAsync - bästa omgång vinner
+            // Kolla bästa omgång med AttemptId - bästa omgång vinner
             var attemptsWithId = userResults
                 .Where(r => r.AttemptId.HasValue)
                 .GroupBy(r => r.AttemptId)
@@ -204,17 +213,26 @@ namespace CyberQuiz.BLL.Services
                 var bestScore = attemptsWithId
                     .Select(g => (double)g.Count(r => r.IsCorrect) / g.Count())
                     .Max();
-                return bestScore >= QuizConstants.MinPassScore; //returerar true/false utifrån 80%-regeln i QuizConstants
+                if (bestScore >= QuizConstants.MinPassScore)
+                    return true;
             }
 
-            // Fallback för äldre data sparad innan denna ändringen som inte har AttemptId
-            var latestPerQuestion = userResults
-                .GroupBy(r => r.QuestionId)
-                .Select(g => g.OrderByDescending(r => r.AnsweredAt).First())
-                .ToList();
+            // Kolla även äldre data utan AttemptId (sparad innan AttemptId introducerades).
+            // Viktigt: detta måste köras även om det finns AttemptId-data, annars ignoreras
+            // gamla godkända försök när användaren misslyckas med ett nytt quiz.
+            var seededResults = userResults.Where(r => !r.AttemptId.HasValue).ToList();
+            if (seededResults.Any())
+            {
+                var latestPerQuestion = seededResults
+                    .GroupBy(r => r.QuestionId)
+                    .Select(g => g.OrderByDescending(r => r.AnsweredAt).First())
+                    .ToList();
 
-            var correctCount = latestPerQuestion.Count(r => r.IsCorrect);
-            return (double)correctCount / latestPerQuestion.Count >= QuizConstants.MinPassScore;
+                var correctCount = latestPerQuestion.Count(r => r.IsCorrect);
+                return (double)correctCount / latestPerQuestion.Count >= QuizConstants.MinPassScore;
+            }
+
+            return false;
         }
     }
 }
